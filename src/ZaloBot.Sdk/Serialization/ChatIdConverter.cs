@@ -1,0 +1,21 @@
+using System.Globalization;
+
+namespace ZaloBot.Sdk.Serialization;
+
+internal sealed class ChatIdConverter : JsonConverter<ChatId?>
+{
+    public override ChatId? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => JsonElement.TryParseValue(ref reader, out var element) ? new(element.Value.ToString()) : null;
+
+    public override void Write(Utf8JsonWriter writer, ChatId? value, JsonSerializerOptions options)
+    {
+        switch (value)
+        {
+            // The Zalo Bot API expects chat_id as a string — always write strings.
+            case { Username: {} username }: writer.WriteStringValue(username); break;
+            case { Identifier: {} identifier }: writer.WriteStringValue(identifier.ToString(CultureInfo.InvariantCulture)); break;
+            case null: writer.WriteNullValue(); break;
+            default: throw new JsonException("Chat ID value is incorrect");
+        }
+    }
+}
