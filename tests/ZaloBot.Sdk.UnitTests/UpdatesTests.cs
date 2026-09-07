@@ -153,6 +153,35 @@ public class UpdatesTests : ZaloBotClientTestBase
     }
 
     [Test]
+    public void Should_ParseStringNumericFields_WhenPlatformReturnsStringNumbers()
+    {
+        // Zalo API có thể trả số dưới dạng string — SDK phải parse cả hai
+        var update = ParseWebhook("""{"update_id":"42","message":{"message_id":"m42","date":"1749632637199","chat":{"id":"c1"},"from":{"id":"u1"},"text":"hi"}}""");
+
+        update.UpdateId.ShouldBe(42);
+        update.Message!.MessageId.ShouldBe("m42");
+        update.Message!.Date.ShouldBe(1749632637199);
+    }
+
+    [Test]
+    public void Should_ParseStringBoolFields_WhenPlatformReturnsStringBooleans()
+    {
+        // can_join_groups dạng string "true"/"false" → vẫn parse được
+        var update = ParseWebhook("""{"update_id":7,"message":{"message_id":"m7","chat":{"id":"c1"},"from":{"id":"u1","display_name":"Bot","can_join_groups":"true"},"text":"x"}}""");
+
+        update.FromDisplayName.ShouldBe("Bot");
+    }
+
+    [Test]
+    public void Should_ReturnNullForUnparsableStringNumbers()
+    {
+        // String không parse được → default(long) (không throw)
+        var update = ParseWebhook("""{"update_id":"not-a-number","message":{"message_id":"m1","chat":{"id":"c"},"from":{"id":"u"},"text":"x"}}""");
+
+        update.UpdateId.ShouldBe(0);
+    }
+
+    [Test]
     public async Task Should_UseUpdateIdPlusOneOffset_When_OffsetFollowsLastUpdate()
     {
         // Spec US3-AC3: with offset = id of the last update, the next call carries offset = id + 1 (caller's responsibility, asserted here as pass-through)

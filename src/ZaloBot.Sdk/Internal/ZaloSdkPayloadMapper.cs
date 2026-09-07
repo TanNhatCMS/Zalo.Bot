@@ -153,14 +153,44 @@ internal static class ZaloSdkPayloadMapper
     }
 
     private static long? TryGetLong(JsonElement element, string propertyName)
-        => element.TryGetProperty(propertyName, out var el) && el.ValueKind == JsonValueKind.Number && el.TryGetInt64(out var value)
-            ? value
-            : null;
+    {
+        if (!element.TryGetProperty(propertyName, out var el))
+        {
+            return null;
+        }
+
+        if (el.ValueKind == JsonValueKind.Number && el.TryGetInt64(out var numValue))
+        {
+            return numValue;
+        }
+
+        if (el.ValueKind == JsonValueKind.String && long.TryParse(el.GetString(), out var strValue))
+        {
+            return strValue;
+        }
+
+        return null;
+    }
 
     private static bool? TryGetBool(JsonElement element, string propertyName)
-        => element.TryGetProperty(propertyName, out var el) && el.ValueKind is JsonValueKind.True or JsonValueKind.False
-            ? el.GetBoolean()
-            : null;
+    {
+        if (!element.TryGetProperty(propertyName, out var el))
+        {
+            return null;
+        }
+
+        if (el.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            return el.GetBoolean();
+        }
+
+        if (el.ValueKind == JsonValueKind.String && bool.TryParse(el.GetString(), out var strValue))
+        {
+            return strValue;
+        }
+
+        return null;
+    }
 
     private static DateTime? TryGetUnixSecondsDateTime(JsonElement element, string propertyName)
         => TryGetLong(element, propertyName) is { } unix && unix > 0
