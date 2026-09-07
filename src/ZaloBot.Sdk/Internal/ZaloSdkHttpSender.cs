@@ -34,10 +34,12 @@ internal sealed class ZaloSdkHttpSender
 
         // The URL contains the access token — it lives only in this local and is never logged or embedded in errors.
         var url = $"{_options.BaseRequestUrl}/{request.MethodName}";
-        using var httpContent = request.ToHttpContent();
+        // No 'using' for HttpContent here: each retry attempt must create a fresh instance
+        // because HttpRequestMessage.Content disposal (inside SendOnceAsync) invalidates it.
         var maxAttempts = Math.Max(1, _options.RetryMaxAttempts);
         for (int attempt = 1; ; attempt++)
         {
+            using var httpContent = request.ToHttpContent();
             var (success, hasResult, result, errorCode, description) = await SendOnceAsync(request, url, httpContent, cancellationToken)
                 .ConfigureAwait(false);
 
