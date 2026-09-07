@@ -60,11 +60,31 @@ public class ZaloBotClient : IZaloBotClient
     /// (or an update with default values) instead of throwing.</summary>
     public static Update ParseWebhookUpdate(JsonElement element) => ZaloSdkPayloadMapper.ParseUpdate(element);
 
-    private ValueTask RaiseOnMakingApiRequest(ApiRequestEventArgs args, CancellationToken cancellationToken)
-        => OnMakingApiRequest is { } handler ? handler(this, args, cancellationToken) : ValueTask.CompletedTask;
+    private async ValueTask RaiseOnMakingApiRequest(ApiRequestEventArgs args, CancellationToken cancellationToken)
+    {
+        if (OnMakingApiRequest is null)
+        {
+            return;
+        }
 
-    private ValueTask RaiseOnApiResponseReceived(ApiResponseEventArgs args, CancellationToken cancellationToken)
-        => OnApiResponseReceived is { } handler ? handler(this, args, cancellationToken) : ValueTask.CompletedTask;
+        foreach (AsyncEventHandler<ApiRequestEventArgs> handler in OnMakingApiRequest.GetInvocationList())
+        {
+            await handler(this, args, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private async ValueTask RaiseOnApiResponseReceived(ApiResponseEventArgs args, CancellationToken cancellationToken)
+    {
+        if (OnApiResponseReceived is null)
+        {
+            return;
+        }
+
+        foreach (AsyncEventHandler<ApiResponseEventArgs> handler in OnApiResponseReceived.GetInvocationList())
+        {
+            await handler(this, args, cancellationToken).ConfigureAwait(false);
+        }
+    }
 
     private static ZaloBotClientOptions CreateOptions(string accessToken, ZaloBotClientOptions? template)
     {
