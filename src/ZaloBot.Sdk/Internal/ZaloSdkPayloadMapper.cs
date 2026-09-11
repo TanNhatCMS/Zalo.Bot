@@ -97,15 +97,31 @@ internal static class ZaloSdkPayloadMapper
         };
     }
 
-    /// <summary>Parses a sendMessage/sendPhoto/sendSticker/sendVoice result. Malformed payloads never throw.</summary>
+    /// <summary>Parses a sendMessage/sendPhoto/sendSticker/sendVoice result. Malformed payloads never throw.
+    /// RawJson keeps the original result JSON for audit logging.</summary>
     public static Message ParseMessage(JsonElement element)
-        => element.ValueKind != JsonValueKind.Object
-            ? new Message()
-            : new Message
-            {
-                MessageId = TryGetString(element, "message_id"),
-                Date = TryGetLong(element, "date"),
-            };
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            return new Message();
+        }
+
+        var message = new Message
+        {
+            MessageId = TryGetString(element, "message_id"),
+            Date = TryGetLong(element, "date"),
+        };
+        try
+        {
+            message.RawJson = element.GetRawText();
+        }
+        catch (InvalidOperationException)
+        {
+            // element detached from its document — defensive, should not happen for parsed responses
+        }
+
+        return message;
+    }
 
     /// <summary>Parses a getWebhookInfo result. Non-object payloads map to <see langword="null"/>.</summary>
     public static WebhookInfo? ParseWebhookInfo(JsonElement element)
