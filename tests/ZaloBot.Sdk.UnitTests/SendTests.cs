@@ -19,6 +19,8 @@ public class SendTests : ZaloBotClientTestBase
 
         message.MessageId.ShouldBe("82599fa32f56d00e8941");
         message.Date.ShouldBe(1749632637199);
+        message.RawJson.ShouldNotBeNull();
+        message.RawJson.ShouldContain("82599fa32f56d00e8941");
         handler.RequestUrls[0].ShouldBe($"{BotUrl}/sendMessage");
         handler.Requests[0].Content!.Headers.ContentType!.MediaType.ShouldBe("application/json");
         var body = handler.RequestBodies[0];
