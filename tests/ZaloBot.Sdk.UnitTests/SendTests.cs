@@ -116,7 +116,45 @@ public class SendTests : ZaloBotClientTestBase
     }
 
     [Test]
-    public async Task Should_ReturnTrue_When_SetWebhookOkWithoutResult()
+    public async Task Should_ParseVerification_When_SetWebhookSucceeds()
+    {
+        // Sample docs bot.zapps.me: setWebhook trả result kèm verification block
+        var handler = new FakeHttpMessageHandler();
+        handler.EnqueueJson("""
+            {"ok":true,"result":{"url":"https://zalo.tannhatcms.io.vn/api/zalo/webhook/1","updated_at":1789021705096,"verification":{"ok":true,"url":"https://zalo.tannhatcms.io.vn/api/zalo/webhook/1","outcome":"webhook.ok","hint":"Your endpoint responded successfully."}},"error_code":0}
+            """);
+        var client = CreateClient(handler);
+
+        var result = await client.SetWebhookAsync("https://zalo.tannhatcms.io.vn/api/zalo/webhook/1", "s3cret");
+
+        result.Url.ShouldBe("https://zalo.tannhatcms.io.vn/api/zalo/webhook/1");
+        result.UpdatedAt.ShouldBe(1789021705096);
+        result.Verification!.Ok.ShouldBe(true);
+        result.Verification.Outcome.ShouldBe("webhook.ok");
+        var body = handler.RequestBodies[0];
+        body.ShouldContain("\"url\":\"https://zalo.tannhatcms.io.vn/api/zalo/webhook/1\"");
+        body.ShouldContain("\"secret_token\":\"s3cret\"");
+    }
+
+    [Test]
+    public async Task Should_ParseVerificationFailure_When_EndpointRejectedByWaf()
+    {
+        // Endpoint bị chặn (Cloudflare 403): API call vẫn ok=true nhưng verification.ok=false
+        var handler = new FakeHttpMessageHandler();
+        handler.EnqueueJson("""
+            {"ok":true,"result":{"url":"https://zalo.tannhatcms.io.vn/api/zalo/webhook/1","updated_at":1789021753697,"verification":{"ok":false,"url":"https://zalo.tannhatcms.io.vn/api/zalo/webhook/1","outcome":"webhook.http.403","hint":"Your server or CDN rejected the request with 403. Check WAF / Cloudflare rules, any IP allowlist, and that the User-Agent \"Java/<version>\" is permitted."}},"error_code":0}
+            """);
+        var client = CreateClient(handler);
+
+        var result = await client.SetWebhookAsync("https://zalo.tannhatcms.io.vn/api/zalo/webhook/1");
+
+        result.Verification!.Ok.ShouldBe(false);
+        result.Verification.Outcome.ShouldBe("webhook.http.403");
+        result.Verification.Hint.ShouldNotBeNullOrWhiteSpace();
+    }
+
+    [Test]
+    public async Task Should_TolerateMissingVerification_When_SetWebhookOkWithoutResult()
     {
         var handler = new FakeHttpMessageHandler();
         handler.EnqueueJson("""{"ok":true}""");
@@ -124,10 +162,7 @@ public class SendTests : ZaloBotClientTestBase
 
         var result = await client.SetWebhookAsync("https://app.example.com/hook", "s3cret");
 
-        result.ShouldBeTrue();
-        var body = handler.RequestBodies[0];
-        body.ShouldContain("\"url\":\"https://app.example.com/hook\"");
-        body.ShouldContain("\"secret_token\":\"s3cret\"");
+        result.Verification.ShouldBeNull();
     }
 
     [Test]

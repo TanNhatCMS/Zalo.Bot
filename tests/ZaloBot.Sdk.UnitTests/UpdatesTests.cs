@@ -14,7 +14,7 @@ public class UpdatesTests : ZaloBotClientTestBase
             {"ok":true,"result":[
               {"update_id":1,"message":{"message_id":"m1","date":1749632637199,"chat":{"id":"5128471675483426707"},"from":{"id":"5128471675483426707","display_name":"Kiet"},"text":"hello bot"}},
               {"update_id":2,"message":{"message_id":"m2","chat":{"id":"g1"},"from":{"id":"u2","display_name":"Ana"},"photo":{"url":"https://cdn.example.com/p.jpg"}}},
-              {"update_id":3,"message":{"message_id":"m3","chat":{"id":"g1"},"from":{"id":"u3"},"voice":{"url":"https://cdn.example.com/v.ogg"}}},
+              {"update_id":3,"message":{"message_id":"m3","chat":{"id":"g1"},"from":{"id":"u3"},"voice_url":"https://cdn.example.com/v.ogg"}},
               {"update_id":4,"message":{"message_id":"m4","chat":{"id":"g1"},"from":{"id":"u4"},"sticker":"https://cdn.example.com/s.png"}}
             ]}
             """);
@@ -93,6 +93,46 @@ public class UpdatesTests : ZaloBotClientTestBase
         update.UpdateId.ShouldBe(9);
         update.ContentType.ShouldBe(ContentType.Unknown);
         update.MediaUrl.ShouldBeNull();
+    }
+
+    [Test]
+    public void Should_UnwrapResultAndParseEventName_When_WebhookPayloadFollowsOfficialDocs()
+    {
+        // Docs bot.zapps.me/docs/webhook: payload = {"ok":true,"result":{...,"event_name":"..."}}
+        var update = ParseWebhook("""
+            {"ok":true,"result":{"event_name":"message.text.received","message":{"from":{"id":"6ede9afa","display_name":"Ted","is_bot":false},"chat":{"id":"6ede9afa","chat_type":"PRIVATE"},"text":"Xin chào","message_id":"2d758cb5","date":1750316131602}}}
+            """);
+
+        update.EventName.ShouldBe("message.text.received");
+        update.ContentType.ShouldBe(ContentType.Text);
+        update.Text.ShouldBe("Xin chào");
+        update.ChatId.ShouldBe("6ede9afa");
+        update.FromUserId.ShouldBe("6ede9afa");
+        update.FromDisplayName.ShouldBe("Ted");
+        update.Message!.MessageId.ShouldBe("2d758cb5");
+    }
+
+    [Test]
+    public void Should_ParseEventNameOnly_When_WebhookSendsUnsupportedEvent()
+    {
+        // message.unsupported.received: có event_name, không có message object
+        var update = ParseWebhook("""{"ok":true,"result":{"event_name":"message.unsupported.received"}}""");
+
+        update.EventName.ShouldBe("message.unsupported.received");
+        update.ContentType.ShouldBe(ContentType.Unknown);
+    }
+
+    [Test]
+    public void Should_ParseVoiceUrlAndStickerUrl_When_WebhookSendsDocsFieldNames()
+    {
+        // Docs: voice = voice_url; sticker = url (hoặc sticker là string URL)
+        var voice = ParseWebhook("""{"ok":true,"result":{"event_name":"message.voice.received","message":{"message_id":"v1","chat":{"id":"c"},"from":{"id":"u"},"voice_url":"https://s1.zalo.me/a.mp3"}}}""");
+        voice.ContentType.ShouldBe(ContentType.Voice);
+        voice.MediaUrl.ShouldBe("https://s1.zalo.me/a.mp3");
+
+        var sticker = ParseWebhook("""{"ok":true,"result":{"event_name":"message.sticker.received","message":{"message_id":"s1","chat":{"id":"c"},"from":{"id":"u"},"sticker":"cat-sticker-id","url":"https://stickers.zaloapp.com/cat.png"}}}""");
+        sticker.ContentType.ShouldBe(ContentType.Sticker);
+        sticker.MediaUrl.ShouldBe("https://stickers.zaloapp.com/cat.png");
     }
 
     [Test]
