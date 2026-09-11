@@ -10,4 +10,8 @@ public partial class Message
 
     /// <summary>Date the message was sent, in epoch milliseconds</summary>
     public long? Date { get; set; }
+
+    /// <summary>Raw JSON of the `result` element as received from the platform — for audit logging. Never contains the token (token lives in the URL only).</summary>
+    [JsonPropertyName("raw_json")]
+    public string? RawJson { get; set; }
 }
