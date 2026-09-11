@@ -14,4 +14,8 @@ public partial class Message
     /// <summary>Raw JSON of the `result` element as received from the platform — for audit logging. Never contains the token (token lives in the URL only).</summary>
     [JsonPropertyName("raw_json")]
     public string? RawJson { get; set; }
+
+    /// <summary>Raw JSON of the request body sent to the platform (set for send* calls) — for audit logging. Never contains the token.</summary>
+    [JsonIgnore]
+    public string? RequestJson { get; set; }
 }
