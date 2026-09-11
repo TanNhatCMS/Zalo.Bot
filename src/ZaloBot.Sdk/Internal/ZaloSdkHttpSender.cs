@@ -215,13 +215,16 @@ internal sealed class ZaloSdkHttpSender
         if (!hasResult)
         {
             // ok=true without result: treat boolean operations as succeeded, others as no data.
-            return typeof(TResponse) == typeof(bool) ? (TResponse)(object)true : default(TResponse)!;
+            if (typeof(TResponse) == typeof(bool)) return (TResponse)(object)true;
+            if (typeof(TResponse) == typeof(SetWebhookResult)) return (TResponse)(object)new SetWebhookResult();
+            return default(TResponse)!;
         }
 
         if (typeof(TResponse) == typeof(User)) return (TResponse)(object)ZaloSdkPayloadMapper.ParseUser(result);
         if (typeof(TResponse) == typeof(Message)) return (TResponse)(object)ZaloSdkPayloadMapper.ParseMessage(result);
         if (typeof(TResponse) == typeof(WebhookInfo)) return (TResponse)(object)ZaloSdkPayloadMapper.ParseWebhookInfo(result)!;
         if (typeof(TResponse) == typeof(bool)) return (TResponse)(object)ZaloSdkPayloadMapper.ParseBool(result);
+        if (typeof(TResponse) == typeof(SetWebhookResult)) return (TResponse)(object)ZaloSdkPayloadMapper.ParseSetWebhookResult(result);
 
         return result.Deserialize<TResponse>(JsonBotAPI.Options)!;
     }

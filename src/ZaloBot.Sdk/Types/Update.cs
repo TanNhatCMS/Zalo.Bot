@@ -9,6 +9,10 @@ public partial class Update
     [JsonPropertyName("update_id")]
     public long UpdateId { get; set; }
 
+    /// <summary>Webhook event name per docs bot.zapps.me/docs/webhook, e.g. "message.text.received",
+    /// "message.unsupported.received". Null for getUpdates elements (no event_name there).</summary>
+    public string? EventName { get; set; }
+
     /// <summary>The message of the update (normalized from message/edited_message); only message_id and date are kept</summary>
     public Message? Message { get; set; }
 

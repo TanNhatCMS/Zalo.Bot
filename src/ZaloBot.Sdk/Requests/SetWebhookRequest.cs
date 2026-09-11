@@ -1,7 +1,9 @@
+using ZaloBot.Sdk.Types;
+
 namespace ZaloBot.Sdk.Requests;
 
-/// <summary>Use this method to specify a URL and receive incoming updates via an outgoing webhook.</summary>
-public class SetWebhookRequest() : RequestBase<bool>("setWebhook")
+/// <summary>Use this method to specify a URL and receive incoming updates via an outgoing webhook.<para>Returns: <see cref="SetWebhookResult"/> including the platform's verification outcome.</para></summary>
+public class SetWebhookRequest() : RequestBase<SetWebhookResult>("setWebhook")
 {
     /// <summary>HTTPS URL to send updates to</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.Never)]

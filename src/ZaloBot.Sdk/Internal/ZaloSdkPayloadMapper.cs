@@ -5,7 +5,9 @@ namespace ZaloBot.Sdk.Internal;
 internal static class ZaloSdkPayloadMapper
 {
     /// <summary>Parses a webhook payload or a getUpdates element into an <see cref="Update"/>.
-    /// Accepts any JSON — unknown shapes return an <see cref="ContentType.Unknown"/> update.</summary>
+    /// Accepts any JSON — unknown shapes return an <see cref="ContentType.Unknown"/> update.
+    /// Webhook payloads (docs bot.zapps.me/docs/webhook) arrive wrapped as {ok, result:{message, event_name}}
+    /// — this unwraps <c>result</c> automatically.</summary>
     public static Update ParseUpdate(JsonElement element)
     {
         var update = new Update { ContentType = ContentType.Unknown };
@@ -15,7 +17,15 @@ internal static class ZaloSdkPayloadMapper
             return update; // arrays, strings, numbers, null → Unknown
         }
 
+        // Webhook payload shape: {"ok":true,"result":{...}} — unwrap result nếu có (getUpdates gửi element trực tiếp)
+        if (element.TryGetProperty("result", out var resultElement)
+            && resultElement.ValueKind == JsonValueKind.Object)
+        {
+            element = resultElement;
+        }
+
         update.UpdateId = TryGetLong(element, "update_id") ?? 0;
+        update.EventName = TryGetString(element, "event_name");
 
         var message = element.TryGetProperty("message", out var messageElement) ? messageElement
             : element.TryGetProperty("edited_message", out var editedElement) ? editedElement
@@ -43,15 +53,16 @@ internal static class ZaloSdkPayloadMapper
             update.ContentType = ContentType.Photo;
             update.MediaUrl = ExtractUrl(photo);
         }
-        else if (message.TryGetProperty("voice", out var voice))
+        else if (message.TryGetProperty("voice_url", out var voiceUrl))
         {
             update.ContentType = ContentType.Voice;
-            update.MediaUrl = ExtractUrl(voice);
+            update.MediaUrl = ExtractUrl(voiceUrl);
         }
         else if (message.TryGetProperty("sticker", out var sticker))
         {
             update.ContentType = ContentType.Sticker;
-            update.MediaUrl = ExtractUrl(sticker);
+            // Docs: sticker id + url riêng biệt — url là nguồn hiển thị, id chỉ là fallback
+            update.MediaUrl = TryGetString(message, "url") ?? ExtractUrl(sticker);
         }
         else if (message.TryGetProperty("action", out var action) && action.ValueKind == JsonValueKind.String)
         {
@@ -110,6 +121,33 @@ internal static class ZaloSdkPayloadMapper
             PendingUpdateCount = TryGetLong(element, "pending_update_count"),
             LastErrorMessage = TryGetString(element, "last_error_message"),
             LastErrorDate = TryGetUnixSecondsDateTime(element, "last_error_date"),
+        };
+    }
+
+    /// <summary>Parses a setWebhook result. Tolerates legacy responses where result is
+    /// a bare bool or missing (verification stays null — callers must treat null as unknown).</summary>
+    public static SetWebhookResult ParseSetWebhookResult(JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            return new SetWebhookResult(); // ok:true without result / result:true
+        }
+
+        var verification = element.TryGetProperty("verification", out var v) && v.ValueKind == JsonValueKind.Object
+            ? new WebhookVerification
+            {
+                Ok = v.TryGetProperty("ok", out var ok) ? ParseBool(ok) : null,
+                Url = TryGetString(v, "url"),
+                Outcome = TryGetString(v, "outcome"),
+                Hint = TryGetString(v, "hint"),
+            }
+            : null;
+
+        return new SetWebhookResult
+        {
+            Url = TryGetString(element, "url"),
+            UpdatedAt = TryGetLong(element, "updated_at"),
+            Verification = verification,
         };
     }
 

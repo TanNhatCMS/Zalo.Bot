@@ -96,8 +96,10 @@ public static partial class ZaloBotClientExtensions
     /// <param name="url">HTTPS URL to send updates to.</param>
     /// <param name="secretToken">Optional: secret token sent in the X-Bot-Api-Secret-Token header of every webhook request, passed through as-is.</param>
     /// <param name="cancellationToken">The cancellation token to cancel operation.</param>
-    /// <returns>On success, <see langword="true"/> is returned.</returns>
-    public static Task<bool> SetWebhookAsync(this IZaloBotClient botClient, string url, string? secretToken = default,
+    /// <returns><see cref="Types.SetWebhookResult"/> with the platform's verification outcome — check
+    /// its <c>Verification.Ok</c>: the call can succeed (ok=true) while the endpoint itself is rejected
+    /// (e.g. WAF 403), meaning events will never arrive.</returns>
+    public static Task<SetWebhookResult> SetWebhookAsync(this IZaloBotClient botClient, string url, string? secretToken = default,
         CancellationToken cancellationToken = default)
         => botClient.SendRequest(new SetWebhookRequest { Url = url, SecretToken = secretToken }, cancellationToken);
 
