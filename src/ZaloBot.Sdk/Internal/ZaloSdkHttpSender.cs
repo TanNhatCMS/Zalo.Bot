@@ -45,7 +45,13 @@ internal sealed class ZaloSdkHttpSender
 
             if (success)
             {
-                return MapResult<TResponse>(result, hasResult);
+                var mapped = MapResult<TResponse>(result, hasResult);
+                // Audit: gắn JSON body đã gửi đến platform (mọi call) để log theo message
+                if (mapped is Message message)
+                {
+                    message.RequestJson = SerializeRequest(request);
+                }
+                return mapped;
             }
 
             var category = ZaloSdkErrorTaxonomy.CategoryOf(errorCode);
