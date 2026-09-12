@@ -207,6 +207,13 @@ internal sealed class ZaloSdkHttpSender
         }
     }
 
+    /// <summary>Serialize a request to the JSON body it sends — same options as <see cref="RequestBase.ToHttpContent"/>.
+    /// Parameterless requests (testWebhook...) return null (no body). Never contains the token.</summary>
+    private static string? SerializeRequest(IRequest request)
+        => request.ToHttpContent() is null
+            ? null // parameterless (testWebhook...) — no body
+            : JsonSerializer.Serialize(request, request.GetType(), JsonBotAPI.Options);
+
     /// <summary>Maps the `result` element to <typeparamref name="TResponse"/> defensively.</summary>
     private static TResponse MapResult<TResponse>(JsonElement result, bool hasResult)
     {
