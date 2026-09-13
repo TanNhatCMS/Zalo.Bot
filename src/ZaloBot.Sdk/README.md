@@ -30,30 +30,51 @@ Message sent = await client.SendMessageAsync("5128471675483426707", "Hello bot")
 ## API methods (all of them)
 
 Extension methods live in `ZaloBotClientExtensions.ApiMethods.cs`; request objects in `Requests/`;
-result types in `Types/`. Every method is `POST` with a JSON body (except parameterless ones).
+result types in `Types/`. HTTP verb per docs/call-api: **GET for read APIs, POST for writes** (the
+platform supports both verbs for every API — see "Call API conventions" below).
 
-| API method       | Extension                                 | Returns            |
-| ---------------- | ----------------------------------------- | ------------------ |
-| `getMe`          | `GetMeAsync()`                            | `User`             |
-| `getUpdates`     | `GetUpdatesAsync(offset, timeoutSeconds, limit)` | `Update[]`  |
-| `sendMessage`    | `SendMessageAsync(chatId, text, parseMode?, textStyles?, ct)` | `Message` |
-| `sendPhoto`      | `SendPhotoAsync(chatId, photo)`           | `Message`          |
-| `sendSticker`    | `SendStickerAsync(chatId, sticker)`       | `Message`          |
-| `sendVoice`      | `SendVoiceAsync(chatId, voice)`           | `Message`          |
-| `sendChatAction` | `SendChatActionAsync(chatId, action)`     | `bool`             |
-| `setWebhook`     | `SetWebhookAsync(url, secretToken?)`      | `SetWebhookResult` |
-| `testWebhook`    | `TestWebhookAsync()`                      | `bool`             |
-| `deleteWebhook`  | `DeleteWebhookAsync()`                    | `bool`             |
-| `getWebhookInfo` | `GetWebhookInfoAsync()`                   | `WebhookInfo?`     |
+| API method       | Verb | Extension                                 | Returns            |
+| ---------------- | ---- | ----------------------------------------- | ------------------ |
+| `getMe`          | GET  | `GetMeAsync()`                            | `User`             |
+| `getUpdates`     | POST | `GetUpdatesAsync(offset, timeoutSeconds, limit)` | `Update[]`  |
+| `sendMessage`    | POST | `SendMessageAsync(chatId, text, parseMode?, textStyles?, ct)` | `Message` |
+| `sendPhoto`      | POST | `SendPhotoAsync(chatId, photo)`           | `Message`          |
+| `sendSticker`    | POST | `SendStickerAsync(chatId, sticker)`       | `Message`          |
+| `sendVoice`      | POST | `SendVoiceAsync(chatId, voice)`           | `Message`          |
+| `sendChatAction` | POST | `SendChatActionAsync(chatId, action)`     | `bool`             |
+| `setWebhook`     | POST | `SetWebhookAsync(url, secretToken?)`      | `SetWebhookResult` |
+| `testWebhook`    | POST | `TestWebhookAsync()`                      | `bool`             |
+| `deleteWebhook`  | POST | `DeleteWebhookAsync()`                    | `bool`             |
+| `getWebhookInfo` | GET  | `GetWebhookInfoAsync()`                   | `WebhookInfo?`     |
 
 `Message` (result of `send*` calls) carries what the platform guarantees — `MessageId` (**string**)
 and `Date` (epoch **milliseconds**) — plus audit helpers `RawJson` (platform result JSON) and
 `RequestJson` (the body the SDK sent), both token-free. Extra/unknown fields from the platform are
 ignored, never throw.
 
+## Call API conventions (docs bot.zapps.me/docs/call-api)
+
+- **URL format**: `https://bot-api.zaloplatforms.com/bot{token}/{methodName}` — token sits directly
+  after `/bot` (no separator). HTTPS only. `ZaloBotClientOptions` enforces this shape.
+- **Method names are case-sensitive** — `sendMessage` ≠ `sendmessage`. The 11 names above are
+  pinned by `ApiConventionsTests` (each verified against `bot.zapps.me/docs/apis/<name>/`).
+- **HTTP verbs**: the platform accepts GET **and** POST for every API, and recommends GET when
+  retrieving data. SDK mapping: pure parameterless reads (`getMe`, `getWebhookInfo`) use **GET**
+  (base class `ParameterlessGetRequest<TResult>`); everything else — including `getUpdates`
+  (long-poll, its docs page specifies POST) — uses **POST**. The sender honors `IRequest.HttpMethod`.
+- **Parameter passing**: the platform accepts query string, form-urlencoded, JSON and
+  multipart/form-data (uploads). The SDK always sends **`application/json; charset=utf-8`**
+  (UTF-8 is mandatory) — none of the 11 methods need file upload (media is referenced by URL/id).
+- **Response envelope**: `{ok, result, error_code, description}` — parsing rules in "Wire contract"
+  below.
+- **getUpdates vs webhook are mutually exclusive** (docs/apis/getUpdates): if a webhook is
+  registered, getUpdates returns nothing until `deleteWebhook` is called. Docs recommend webhooks
+  for production, polling for local testing.
+
 ## Wire contract
 
-- URL: `POST {BaseUrl}/bot{Token}/{methodName}`, `Content-Type: application/json`.
+- URL: `{BaseUrl}/bot{Token}/{methodName}` — GET for read APIs (`getMe`, `getWebhookInfo`), POST
+  for the rest (see "Call API conventions"); `Content-Type: application/json; charset=utf-8`.
 - Serialization: `JsonBotAPI.Options` — `SnakeCaseLower` naming policy, `WhenWritingDefault`
   ignore condition (null/0/false fields are omitted), `AllowReadingFromString` for numbers.
 - `ChatId` always serializes as a **string** (`ChatIdConverter`) — required by the platform even
@@ -130,7 +151,7 @@ Taxonomy (`Errors/ZaloSdkErrorTaxonomy.cs`) maps the official codes:
 With long polling, the server holds the connection up to `timeoutSeconds`. If the SDK per-request
 timeout is not strictly **longer** than the long-poll timeout, the client cancels the request just
 as the server is about to answer → spurious timeouts. The app therefore sends an explicit
-`timeoutSeconds` (default `LongPollTimeoutSeconds = 25` in `ZaloBotOptions`) plus a 15 s buffer as
+`timeoutSeconds` (adapter constant `LongPollTimeoutSeconds = 25`) plus a 15 s buffer as
 the per-request timeout (40 s). Hierarchy to preserve: **server long-poll < SDK per-request timeout**.
 Guard tests: `ZaloBotClientLongPollTests`.
 
@@ -162,8 +183,10 @@ dotnet test --filter "FullyQualifiedName~ZaloBot.Sdk.UnitTests"
 
 ## Adding a new API method (recipe)
 
-1. Request type in `Requests/` extending `RequestBase<TResponse>` (`"methodName"` = snake_case API
-   name; JSON properties via `[JsonPropertyName]` or snake_case policy).
+1. Request type in `Requests/` extending `RequestBase<TResponse>` (pure parameterless reads →
+   `ParameterlessGetRequest<TResult>` = GET; otherwise POST), with `"methodName"` = the documented
+   API name copied **exactly** (camelCase, case-sensitive) and JSON properties via
+   `[JsonPropertyName]` or the snake_case policy.
 2. Extension method in `ZaloBotClientExtensions.ApiMethods.cs` (local validation of constraints
    such as text length goes here, before any network call).
 3. New result type? Add a `Types/` model and a defensive parser in `Internal/ZaloSdkPayloadMapper`
