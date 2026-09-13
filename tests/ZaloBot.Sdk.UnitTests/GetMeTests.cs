@@ -40,7 +40,7 @@ public class GetMeTests : ZaloBotClientTestBase
     }
 
     [Test]
-    public async Task Should_PostToBotPath_When_GetMeCalled()
+    public async Task Should_SendGetToBotPath_When_GetMeCalled()
     {
         var handler = new FakeHttpMessageHandler();
         handler.EnqueueJson(StandardGetMeResponse);
@@ -50,7 +50,7 @@ public class GetMeTests : ZaloBotClientTestBase
 
         handler.RequestCount.ShouldBe(1);
         handler.RequestUrls[0].ShouldBe($"{BotUrl}/getMe");
-        handler.Requests[0].Method.ShouldBe(HttpMethod.Post);
+        handler.Requests[0].Method.ShouldBe(HttpMethod.Get); // docs/call-api: GET cho API đọc
         handler.RequestBodies[0].ShouldBe(string.Empty); // parameterless request has no body
     }
 

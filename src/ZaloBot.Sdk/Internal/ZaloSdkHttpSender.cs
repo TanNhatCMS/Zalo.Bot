@@ -88,7 +88,9 @@ internal sealed class ZaloSdkHttpSender
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(_options.Timeout);
 
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url) { Content = httpContent };
+            // Verb theo từng request: GET cho API đọc (docs/call-api khuyến nghị), POST cho còn lại —
+            // docs hỗ trợ cả 2 cho mọi API; method name trên URL phân biệt hoa thường.
+            using var httpRequest = new HttpRequestMessage(request.HttpMethod, url) { Content = httpContent };
             if (_onMakingApiRequest is not null)
             {
                 await _onMakingApiRequest(new ApiRequestEventArgs(request, httpRequest), timeoutCts.Token).ConfigureAwait(false);
