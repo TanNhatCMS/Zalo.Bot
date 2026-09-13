@@ -42,6 +42,38 @@ public class SendTests : ZaloBotClientTestBase
     }
 
     [Test]
+    public async Task Should_IncludeTextStyles_When_SendMessageWithStyleRuns()
+    {
+        // Docs bot.zapps.me/docs/apis/sendMessage: text_styles = [{start, len, st[]}], offset theo UTF-16 code units
+        var handler = new FakeHttpMessageHandler();
+        handler.EnqueueJson(MessageResult);
+        var client = CreateClient(handler);
+
+        await client.SendMessageAsync("123", "Xin chào bạn", textStyles:
+        [
+            TextStyle.Of(0, 7, TextStyleCode.Bold, TextStyleCode.ColorRed),
+            TextStyle.Of(9, 3, TextStyleCode.Italic),
+        ]);
+
+        var body = handler.RequestBodies[0];
+        body.ShouldContain("\"text_styles\":");
+        body.ShouldContain("{\"start\":0,\"len\":7,\"st\":[\"b\",\"c_db342e\"]}");
+        body.ShouldContain("{\"start\":9,\"len\":3,\"st\":[\"i\"]}");
+    }
+
+    [Test]
+    public async Task Should_OmitTextStyles_When_SendMessageWithoutStyleRuns()
+    {
+        var handler = new FakeHttpMessageHandler();
+        handler.EnqueueJson(MessageResult);
+        var client = CreateClient(handler);
+
+        await client.SendMessageAsync("123", "plain");
+
+        handler.RequestBodies[0].ShouldNotContain("text_styles");
+    }
+
+    [Test]
     public void Should_ThrowLocally_When_TextIsLongerThan2000Characters()
     {
         var handler = new FakeHttpMessageHandler();

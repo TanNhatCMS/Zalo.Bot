@@ -36,19 +36,28 @@ public static partial class ZaloBotClientExtensions
     /// <param name="botClient">An instance of <see cref="IZaloBotClient"/></param>
     /// <param name="chatId">Unique identifier for the target chat.</param>
     /// <param name="text">Text of the message to be sent, 1-2000 characters. Validated locally before any network call.</param>
-    /// <param name="parseMode">Optional: "markdown" or "html".</param>
+    /// <param name="parseMode">Optional: "markdown" or "html". Takes precedence over <paramref name="textStyles"/>:
+    /// the platform ignores text_styles when parse_mode is present.</param>
+    /// <param name="textStyles">Optional explicit rich-text style runs over the raw text; offsets are UTF-16 code
+    /// units (same as .NET string indexing) — see <see cref="Types.TextStyle"/> and <see cref="Types.TextStyleCode"/>.</param>
     /// <param name="cancellationToken">The cancellation token to cancel operation.</param>
     /// <returns>On success, the sent <see cref="Message"/> is returned.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is empty or longer than 2000 characters (no request is sent).</exception>
     public static Task<Message> SendMessageAsync(this IZaloBotClient botClient, ChatId chatId, string text, string? parseMode = default,
-        CancellationToken cancellationToken = default)
+        IEnumerable<TextStyle>? textStyles = default, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(text) || text.Length > MaxMessageTextLength)
         {
             throw new ArgumentException($"Message text must be between 1 and {MaxMessageTextLength} characters.", nameof(text));
         }
 
-        return botClient.SendRequest(new SendMessageRequest { ChatId = chatId, Text = text, ParseMode = parseMode }, cancellationToken);
+        return botClient.SendRequest(new SendMessageRequest
+        {
+            ChatId = chatId,
+            Text = text,
+            ParseMode = parseMode,
+            TextStyles = textStyles?.ToArray(),
+        }, cancellationToken);
     }
 
     /// <summary>Use this method to send photos.</summary>

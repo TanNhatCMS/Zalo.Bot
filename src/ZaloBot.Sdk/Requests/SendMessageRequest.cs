@@ -15,4 +15,9 @@ public class SendMessageRequest() : RequestBase<Message>("sendMessage")
     /// <summary>Mode for parsing the message text: "markdown" or "html"</summary>
     [JsonPropertyName("parse_mode")]
     public string? ParseMode { get; set; }
+
+    /// <summary>Explicit rich-text style runs over the raw text (UTF-16 offsets) — see <see cref="Types.TextStyle"/>.
+    /// The platform ignores this when <see cref="ParseMode"/> is also set: parse_mode wins.</summary>
+    [JsonPropertyName("text_styles")]
+    public IReadOnlyList<TextStyle>? TextStyles { get; set; }
 }
