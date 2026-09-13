@@ -1,6 +1,7 @@
 # ZaloBot.Sdk
 
-Independent .NET 10 client library for the **Zalo Bot API** (docs: <https://bot.zapps.me/docs>).
+Independent .NET 10 client library for the **Zalo Bot API** (docs: <https://bot.zapps.me/docs>;
+offline copy in [docs/](docs/) — scraped 2026-09-14, all 21 pages incl. 11 API references).
 Adapted from [Telegram.Bot](https://github.com/TelegramBots/Telegram.Bot) (MIT — see
 `LICENSE-Telegram.Bot.txt`), pruned to the **11 methods** the Zalo Bot API exposes, and extended
 with an official-error-code taxonomy, a retry/backoff pipeline and access-token hygiene.
@@ -121,6 +122,38 @@ await client.SendMessageAsync("5128471675483426707", "Xin chào bạn", textStyl
     TextStyle.Of(0, 7, TextStyleCode.Bold, TextStyleCode.ColorRed),
 ]);
 ```
+
+## Polling (adapted from Telegram.Bot's polling — reference tmp/design/TelegramBots)
+
+`namespace ZaloBot.Sdk.Polling` + `ZaloBotClientExtensions.Polling.cs` — vòng lặp getUpdates
+built into the SDK, mirroring the Telegram.Bot API surface:
+
+- `ReceiverOptions { Offset (long?), Limit (1–100, default 100), TimeoutSeconds (default 25), DropPendingUpdates }`.
+  **Zalo-specific deviations**: no `AllowedUpdates` (Zalo getUpdates has no such parameter);
+  `UpdateId` is long; long-poll hold is set explicitly via `TimeoutSeconds` instead of reusing
+  `client.Timeout` (the reference's approach races — client and server would cancel at the same
+  moment). Rule: client `TimeoutSeconds` ≥ receiver `TimeoutSeconds` + 15. `TimeoutSeconds = 0`
+  means short polling (tight loop — pace it yourself).
+- `IUpdateHandler { HandleUpdateAsync, HandleErrorAsync }` + enum `HandleErrorSource`
+  (`PollingError` — getUpdates failed, loop continues; `HandleUpdateError` — handler threw, loop
+  continues; `FatalError` — loop stopped) + `DefaultUpdateHandler` delegate wrapper.
+- Extensions on `IZaloBotClient`: `StartReceiving(...)` (fire-and-forget background loop, several
+  delegate/IUpdateHandler overloads), `ReceiveAsync(...)` (blocking variant), `DropPendingUpdatesAsync()`
+  (short-poll + advance offset, returns the next offset). Loop behavior: dispatch each update,
+  advance `offset = lastUpdateId + 1`, errors go to the error handler and the loop continues,
+  `OperationCanceledException` stops it.
+- Webhook vs polling are mutually exclusive on the platform (docs/apis/getUpdates) — delete the
+  webhook before using the receiver.
+
+**Event sugar on `ZaloBotClient`** (adapted from the reference's TelegramBotClient): subscribing
+`client.OnUpdate += handler` automatically **starts** the polling loop; removing the last
+`OnUpdate` subscriber automatically **stops** it. `client.OnError += handler` receives polling
+errors/handler exceptions (without it, errors go to `Trace.WriteLine`). Zalo has no `UpdateType`,
+so there is no `OnMessage` event — dispatch on `Update.ContentType`/`Update.Text` in your handler.
+
+The app currently does NOT use the built-in receiver: `Infrastructure/Services/ZaloBotPollingService`
+implements its own multi-bot loop (bot-list cache, per-bot DB offsets, settings, counters). The SDK
+receiver is for single-token scenarios (tools, scripts, one bot per process).
 
 ## Errors, retry and token hygiene
 
