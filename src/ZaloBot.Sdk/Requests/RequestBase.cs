@@ -28,3 +28,18 @@ public abstract class ParameterlessRequest<TResult>(string methodName) : Request
     /// <inheritdoc/>
     public override HttpContent? ToHttpContent() => default;
 }
+
+/// <summary>Parameterless READ-ONLY request sent via HTTP GET — docs bot.zapps.me/docs/call-api
+/// khuyến nghị GET cho API truy xuất dữ liệu (POST vẫn được hỗ trợ cho mọi API).
+/// Lưu ý method name trên URL phân biệt hoa thường.</summary>
+/// <typeparam name="TResponse">Type of result expected in result</typeparam>
+/// <param name="methodName">Name of request method</param>
+public abstract class ParameterlessGetRequest<TResult> : ParameterlessRequest<TResult>
+{
+    /// <summary>Initializes a new GET request</summary>
+    /// <param name="methodName">Name of request method</param>
+    protected ParameterlessGetRequest(string methodName) : base(methodName)
+    {
+        HttpMethod = HttpMethod.Get;
+    }
+}
