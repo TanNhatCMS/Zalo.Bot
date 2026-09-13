@@ -8,7 +8,9 @@ public class SendVoiceRequest() : RequestBase<Message>("sendVoice")
     [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public required ChatId ChatId { get; set; }
 
-    /// <summary>Voice message to send: an HTTP URL or an id of a voice already uploaded to the platform</summary>
+    /// <summary>Voice to send: an HTTP URL to an .aac file (docs apis/sendVoice: bắt buộc đường dẫn
+    /// hợp lệ có phần mở rộng .aac; chỉ hỗ trợ chat 1-1, không hỗ trợ nhóm).</summary>
+    [JsonPropertyName("voice_url")]
     [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
-    public required string Voice { get; set; }
+    public required string VoiceUrl { get; set; }
 }

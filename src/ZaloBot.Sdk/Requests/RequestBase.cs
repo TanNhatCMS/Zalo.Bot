@@ -15,6 +15,10 @@ public abstract class RequestBase<TResponse>(string methodName) : IRequest<TResp
     [JsonIgnore]
     public string MethodName { get; } = methodName;
 
+    /// <summary>Allows this object to be used as a response in webhooks</summary>
+    [JsonIgnore]
+    public bool IsWebhookResponse { get; set; }
+
     /// <summary>Generate content of HTTP message</summary>
     /// <returns>Content of HTTP request</returns>
     public virtual HttpContent? ToHttpContent()
