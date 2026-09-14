@@ -40,16 +40,17 @@ internal sealed class ZaloSdkHttpSender
         for (int attempt = 1; ; attempt++)
         {
             using var httpContent = request.ToHttpContent();
-            var (success, hasResult, result, errorCode, description) = await SendOnceAsync(request, url, httpContent, cancellationToken)
+            var (success, hasResult, result, errorCode, description, body) = await SendOnceAsync(request, url, httpContent, cancellationToken)
                 .ConfigureAwait(false);
 
             if (success)
             {
                 var mapped = MapResult<TResponse>(result, hasResult);
-                // Audit: gắn JSON body đã gửi đến platform (mọi call) để log theo message
+                // Audit: gắn JSON body đã gửi và ApiResponse JSON nhận về từ platform để log theo message
                 if (mapped is Message message)
                 {
                     message.RequestJson = SerializeRequest(request);
+                    message.RawJson = body;
                 }
                 return mapped;
             }
@@ -77,9 +78,9 @@ internal sealed class ZaloSdkHttpSender
         }
     }
 
-    /// <summary>Sends one HTTP attempt and returns the parsed wrapper outcome.
+    /// <summary>Sends one HTTP attempt and returns the parsed wrapper outcome and raw response body.
     /// Network/timeout failures throw <see cref="ZaloBotNetworkException"/> (never retried here).</summary>
-    private async Task<(bool Success, bool HasResult, JsonElement Result, int ErrorCode, string? Description)> SendOnceAsync(
+    private async Task<(bool Success, bool HasResult, JsonElement Result, int ErrorCode, string? Description, string Body)> SendOnceAsync(
         IRequest request, string url, HttpContent? httpContent, CancellationToken cancellationToken)
     {
         HttpResponseMessage? httpResponse = null;
@@ -111,12 +112,6 @@ internal sealed class ZaloSdkHttpSender
                 throw new ZaloBotNetworkException(safeMessage, SanitizeInner(exception));
             }
 
-            if (_onApiResponseReceived is not null)
-            {
-                var apiRequestEventArgs = new ApiRequestEventArgs(request, httpRequest);
-                await _onApiResponseReceived(new ApiResponseEventArgs(httpResponse, apiRequestEventArgs), timeoutCts.Token).ConfigureAwait(false);
-            }
-
             string body;
             try
             {
@@ -133,7 +128,23 @@ internal sealed class ZaloSdkHttpSender
                 throw new ZaloBotNetworkException(safeMessage, SanitizeInner(exception));
             }
 
-            return ParseWrapper(body, request.MethodName);
+            var outcome = ParseWrapper(body, request.MethodName);
+
+            if (_onApiResponseReceived is not null)
+            {
+                var apiRequestEventArgs = new ApiRequestEventArgs(request, httpRequest);
+                var apiResponse = new Types.ApiResponse<JsonElement>
+                {
+                    Ok = outcome.Success,
+                    ErrorCode = outcome.ErrorCode,
+                    Description = outcome.Description,
+                    Result = outcome.HasResult ? outcome.Result : default,
+                };
+                var args = new ApiResponseEventArgs(httpResponse, apiRequestEventArgs, body, apiResponse);
+                await _onApiResponseReceived(args, timeoutCts.Token).ConfigureAwait(false);
+            }
+
+            return (outcome.Success, outcome.HasResult, outcome.Result, outcome.ErrorCode, outcome.Description, body);
         }
         finally
         {
