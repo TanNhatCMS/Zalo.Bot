@@ -1,7 +1,6 @@
-// GENERATED FILE - DO NOT MODIFY MANUALLY (model phản hức chính của nền tảng, tham chiếu từ
-// tmp/design/TelegramBots/Telegram.Bot/src/Telegram.Bot/Types/ApiResponse.cs).
-// Trong Zalo SDK, ZaloSdkHttpSender parse envelope riêng (không qua ApiResponse<T>) nhưng model này
-// được giữ cho AI tương lai có tham chiếu cấu trúc gốc khi đọc/chuyển code Telegram.
+// Model tham chiếu từ tmp/design/TelegramBots/Telegram.Bot/src/Telegram.Bot/Types/ApiResponse.cs —
+// giữ để AI tương lai có cấu trúc gốc khi đọc/chuyển code Telegram.Bot. Trong Zalo SDK,
+// ZaloSdkHttpSender parse envelope riêng (không qua ApiResponse<T>) nhưng model này vẫn là tài liệu.
 
 namespace ZaloBot.Sdk.Types;
 
