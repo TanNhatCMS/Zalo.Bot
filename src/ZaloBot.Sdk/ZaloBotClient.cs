@@ -1,5 +1,6 @@
 using ZaloBot.Sdk.Args;
 using ZaloBot.Sdk.Internal;
+using ZaloBot.Sdk.Polling;
 
 namespace ZaloBot.Sdk;
 
@@ -24,6 +25,22 @@ public class ZaloBotClient : IZaloBotClient
 
     /// <inheritdoc/>
     public event AsyncEventHandler<ApiResponseEventArgs>? OnApiResponseReceived;
+
+#pragma warning disable CS1591
+    public delegate Task OnUpdateHandler(Update update);
+    public delegate Task OnErrorHandler(Exception exception, Polling.HandleErrorSource source);
+    private OnUpdateHandler? _onUpdate;
+    private readonly object _receivingEventsLock = new();
+    private CancellationTokenSource? _receivingEvents;
+
+    /// <summary>Handler to be called when there is an incoming update — subscribe sẽ TỰ khởi động
+    /// vòng polling (StartEventReceiving), unsubscribe subscriber cuối cùng sẽ tự dừng.
+    /// (Adapted from Telegram.Bot — Zalo không có UpdateType nên không có event OnMessage riêng.)</summary>
+    public event OnUpdateHandler? OnUpdate { add { _onUpdate += value; StartEventReceiving(); } remove { _onUpdate -= value; StopEventReceiving(); } }
+
+    /// <summary>Handler to be called when there was a polling error or an exception in your handlers</summary>
+    public event OnErrorHandler? OnError;
+#pragma warning restore CS1591
 
     /// <summary>Create a new <see cref="ZaloBotClient"/> instance.</summary>
     /// <param name="options">Configuration for <see cref="ZaloBotClient"/></param>
@@ -59,6 +76,58 @@ public class ZaloBotClient : IZaloBotClient
     /// Defensive: unknown/missing fields and unexpected shapes map to <see cref="ContentType.Unknown"/>
     /// (or an update with default values) instead of throwing.</summary>
     public static Update ParseWebhookUpdate(JsonElement element) => ZaloSdkPayloadMapper.ParseUpdate(element);
+
+    private void StartEventReceiving()
+    {
+        lock (_receivingEventsLock)
+        {
+            if (_receivingEvents is not null)
+            {
+                return;
+            }
+
+            _receivingEvents = new CancellationTokenSource();
+        }
+
+        // Loop long-poll mặc định 25s của ReceiverOptions — client Timeout (mặc định 30s) vẫn thấp hơn
+        // quy tắc an toàn (≥ long-poll + 15) sẽ do người gọi cân nhắc khi đổi Timeout.
+        this.StartReceiving(
+            async (bot, update, ct) =>
+            {
+                var task = _onUpdate?.Invoke(update);
+                if (task is not null)
+                {
+                    await task.ConfigureAwait(true);
+                }
+            },
+            async (bot, ex, source, ct) =>
+            {
+                var task = OnError?.Invoke(ex, source);
+                if (task is not null)
+                {
+                    await task.ConfigureAwait(true);
+                }
+                else
+                {
+                    System.Diagnostics.Trace.WriteLine(ex); // fallback nếu chưa ai subscribe OnError
+                }
+            }, new Polling.ReceiverOptions(), _receivingEvents.Token);
+    }
+
+    private void StopEventReceiving()
+    {
+        lock (_receivingEventsLock)
+        {
+            if (_onUpdate is not null || _receivingEvents is null)
+            {
+                return;
+            }
+
+            _receivingEvents.Cancel();
+            _receivingEvents.Dispose();
+            _receivingEvents = null;
+        }
+    }
 
     private async ValueTask RaiseOnMakingApiRequest(ApiRequestEventArgs args, CancellationToken cancellationToken)
     {

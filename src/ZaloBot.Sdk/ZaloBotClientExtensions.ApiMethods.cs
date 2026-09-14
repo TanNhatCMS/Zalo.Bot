@@ -64,11 +64,12 @@ public static partial class ZaloBotClientExtensions
     /// <param name="botClient">An instance of <see cref="IZaloBotClient"/></param>
     /// <param name="chatId">Unique identifier for the target chat.</param>
     /// <param name="photo">Photo to send: an HTTP URL or an id of a photo already uploaded to the platform.</param>
+    /// <param name="caption">Optional caption 1–2000 characters sent along with the photo.</param>
     /// <param name="cancellationToken">The cancellation token to cancel operation.</param>
     /// <returns>On success, the sent <see cref="Message"/> is returned.</returns>
     public static Task<Message> SendPhotoAsync(this IZaloBotClient botClient, ChatId chatId, string photo,
-        CancellationToken cancellationToken = default)
-        => botClient.SendRequest(new SendPhotoRequest { ChatId = chatId, Photo = photo }, cancellationToken);
+        string? caption = default, CancellationToken cancellationToken = default)
+        => botClient.SendRequest(new SendPhotoRequest { ChatId = chatId, Photo = photo, Caption = caption }, cancellationToken);
 
     /// <summary>Use this method to send stickers.</summary>
     /// <param name="botClient">An instance of <see cref="IZaloBotClient"/></param>
@@ -82,13 +83,13 @@ public static partial class ZaloBotClientExtensions
 
     /// <summary>Use this method to send voice messages.</summary>
     /// <param name="botClient">An instance of <see cref="IZaloBotClient"/></param>
-    /// <param name="chatId">Unique identifier for the target chat.</param>
-    /// <param name="voice">Voice message to send: an HTTP URL or an id of a voice already uploaded to the platform.</param>
+    /// <param name="chatId">Unique identifier for the target chat (docs: chỉ hỗ trợ chat 1-1, không hỗ trợ nhóm).</param>
+    /// <param name="voiceUrl">HTTP URL of the .aac file to send (docs apis/sendVoice: bắt buộc đuôi .aac).</param>
     /// <param name="cancellationToken">The cancellation token to cancel operation.</param>
     /// <returns>On success, the sent <see cref="Message"/> is returned.</returns>
-    public static Task<Message> SendVoiceAsync(this IZaloBotClient botClient, ChatId chatId, string voice,
+    public static Task<Message> SendVoiceAsync(this IZaloBotClient botClient, ChatId chatId, string voiceUrl,
         CancellationToken cancellationToken = default)
-        => botClient.SendRequest(new SendVoiceRequest { ChatId = chatId, Voice = voice }, cancellationToken);
+        => botClient.SendRequest(new SendVoiceRequest { ChatId = chatId, VoiceUrl = voiceUrl }, cancellationToken);
 
     /// <summary>Use this method when you need to tell the user that something is happening on the bot's side.</summary>
     /// <param name="botClient">An instance of <see cref="IZaloBotClient"/></param>
@@ -103,14 +104,23 @@ public static partial class ZaloBotClientExtensions
     /// <summary>Use this method to specify a URL and receive incoming updates via an outgoing webhook.</summary>
     /// <param name="botClient">An instance of <see cref="IZaloBotClient"/></param>
     /// <param name="url">HTTPS URL to send updates to.</param>
-    /// <param name="secretToken">Optional: secret token sent in the X-Bot-Api-Secret-Token header of every webhook request, passed through as-is.</param>
+    /// <param name="secretToken">Secret token sent in the X-Bot-Api-Secret-Token header of every webhook
+    /// request — docs apis/setWebhook: BẮT BUỘC, 8–256 ký tự.</param>
     /// <param name="cancellationToken">The cancellation token to cancel operation.</param>
     /// <returns><see cref="Types.SetWebhookResult"/> with the platform's verification outcome — check
     /// its <c>Verification.Ok</c>: the call can succeed (ok=true) while the endpoint itself is rejected
     /// (e.g. WAF 403), meaning events will never arrive.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="secretToken"/> is null/not 8–256 characters (no request is sent).</exception>
     public static Task<SetWebhookResult> SetWebhookAsync(this IZaloBotClient botClient, string url, string? secretToken = default,
         CancellationToken cancellationToken = default)
-        => botClient.SendRequest(new SetWebhookRequest { Url = url, SecretToken = secretToken }, cancellationToken);
+    {
+        if (string.IsNullOrWhiteSpace(secretToken) || secretToken.Length is < 8 or > 256)
+        {
+            throw new ArgumentException("Secret token must be between 8 and 256 characters.", nameof(secretToken));
+        }
+
+        return botClient.SendRequest(new SetWebhookRequest { Url = url, SecretToken = secretToken }, cancellationToken);
+    }
 
     /// <summary>Use this method to verify webhook delivery works end to end.</summary>
     /// <param name="botClient">An instance of <see cref="IZaloBotClient"/></param>
