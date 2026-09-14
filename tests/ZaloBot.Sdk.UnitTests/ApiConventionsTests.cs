@@ -17,7 +17,7 @@ public class ApiConventionsTests
         new SendMessageRequest { ChatId = "1", Text = "hi" }.MethodName.ShouldBe("sendMessage");
         new SendPhotoRequest { ChatId = "1", Photo = "u" }.MethodName.ShouldBe("sendPhoto");
         new SendStickerRequest { ChatId = "1", Sticker = "s" }.MethodName.ShouldBe("sendSticker");
-        new SendVoiceRequest { ChatId = "1", Voice = "u" }.MethodName.ShouldBe("sendVoice");
+        new SendVoiceRequest { ChatId = "1", VoiceUrl = "u" }.MethodName.ShouldBe("sendVoice");
         new SendChatActionRequest { ChatId = "1", Action = ChatAction.Typing }.MethodName.ShouldBe("sendChatAction");
         new SetWebhookRequest { Url = "https://app.example.com/hook" }.MethodName.ShouldBe("setWebhook");
         new TestWebhookRequest().MethodName.ShouldBe("testWebhook");
@@ -39,7 +39,7 @@ public class ApiConventionsTests
         new SendMessageRequest { ChatId = "1", Text = "hi" }.HttpMethod.ShouldBe(HttpMethod.Post);
         new SendPhotoRequest { ChatId = "1", Photo = "u" }.HttpMethod.ShouldBe(HttpMethod.Post);
         new SendStickerRequest { ChatId = "1", Sticker = "s" }.HttpMethod.ShouldBe(HttpMethod.Post);
-        new SendVoiceRequest { ChatId = "1", Voice = "u" }.HttpMethod.ShouldBe(HttpMethod.Post);
+        new SendVoiceRequest { ChatId = "1", VoiceUrl = "u" }.HttpMethod.ShouldBe(HttpMethod.Post);
         new SendChatActionRequest { ChatId = "1", Action = ChatAction.Typing }.HttpMethod.ShouldBe(HttpMethod.Post);
         new SetWebhookRequest { Url = "https://app.example.com/hook" }.HttpMethod.ShouldBe(HttpMethod.Post);
         new TestWebhookRequest().HttpMethod.ShouldBe(HttpMethod.Post);

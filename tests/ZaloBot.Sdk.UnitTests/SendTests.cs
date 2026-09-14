@@ -125,14 +125,56 @@ public class SendTests : ZaloBotClientTestBase
     [Test]
     public async Task Should_SendVoiceUrl_When_SendVoiceCalled()
     {
+        // Docs apis/sendVoice: field là voice_url (không phải voice) — bắt buộc .aac, chỉ chat 1-1
         var handler = new FakeHttpMessageHandler();
         handler.EnqueueJson(MessageResult);
         var client = CreateClient(handler);
 
-        await client.SendVoiceAsync("123", "https://example.com/voice.ogg");
+        await client.SendVoiceAsync("123", "https://example.com/voice.aac");
 
         handler.RequestUrls[0].ShouldBe($"{BotUrl}/sendVoice");
-        handler.RequestBodies[0].ShouldContain("\"voice\":\"https://example.com/voice.ogg\"");
+        handler.RequestBodies[0].ShouldContain("\"voice_url\":\"https://example.com/voice.aac\"");
+    }
+
+    [Test]
+    public async Task Should_SendPhotoWithCaption_When_CaptionGiven()
+    {
+        // Docs apis/sendPhoto: caption 1–2000 ký tự, tùy chọn
+        var handler = new FakeHttpMessageHandler();
+        handler.EnqueueJson(MessageResult);
+        var client = CreateClient(handler);
+
+        await client.SendPhotoAsync("123", "https://example.com/photo.jpg", caption: "Anh minh hoa");
+
+        handler.RequestBodies[0].ShouldContain("\"photo\":\"https://example.com/photo.jpg\"");
+        handler.RequestBodies[0].ShouldContain("\"caption\":\"Anh minh hoa\"");
+    }
+
+    [Test]
+    public async Task Should_OmitCaption_When_SendPhotoWithoutCaption()
+    {
+        var handler = new FakeHttpMessageHandler();
+        handler.EnqueueJson(MessageResult);
+        var client = CreateClient(handler);
+
+        await client.SendPhotoAsync("123", "https://example.com/photo.jpg");
+
+        handler.RequestBodies[0].ShouldNotContain("caption");
+    }
+
+    [Test]
+    public async Task Should_ThrowBeforeSending_When_SecretTokenOutsideDocumentedRange()
+    {
+        // Docs apis/setWebhook: secret_token 8–256 ký tự — validate tại client, không gửi request
+        var handler = new FakeHttpMessageHandler();
+        handler.EnqueueJson(MessageResult);
+        var client = CreateClient(handler);
+
+        Should.Throw<ArgumentException>(() => client.SetWebhookAsync("https://app.example.com/hook", "short"));
+        Should.Throw<ArgumentException>(() => client.SetWebhookAsync("https://app.example.com/hook", new string('x', 257)));
+        Should.Throw<ArgumentException>(() => client.SetWebhookAsync("https://app.example.com/hook"));
+
+        handler.RequestCount.ShouldBe(0); // không request nào được gửi
     }
 
     [Test]
@@ -155,19 +197,19 @@ public class SendTests : ZaloBotClientTestBase
         // Sample docs bot.zapps.me: setWebhook trả result kèm verification block
         var handler = new FakeHttpMessageHandler();
         handler.EnqueueJson("""
-            {"ok":true,"result":{"url":"https://zalo.tannhatcms.io.vn/api/zalo/webhook/1","updated_at":1789021705096,"verification":{"ok":true,"url":"https://zalo.tannhatcms.io.vn/api/zalo/webhook/1","outcome":"webhook.ok","hint":"Your endpoint responded successfully."}},"error_code":0}
+            {"ok":true,"result":{"url":"https://zalo.tannhatcms.io.vn/api/webhook/zalo/1","updated_at":1789021705096,"verification":{"ok":true,"url":"https://zalo.tannhatcms.io.vn/api/webhook/zalo/1","outcome":"webhook.ok","hint":"Your endpoint responded successfully."}},"error_code":0}
             """);
         var client = CreateClient(handler);
 
-        var result = await client.SetWebhookAsync("https://zalo.tannhatcms.io.vn/api/zalo/webhook/1", "s3cret");
+        var result = await client.SetWebhookAsync("https://zalo.tannhatcms.io.vn/api/webhook/zalo/1", "s3cret-t0ken");
 
-        result.Url.ShouldBe("https://zalo.tannhatcms.io.vn/api/zalo/webhook/1");
+        result.Url.ShouldBe("https://zalo.tannhatcms.io.vn/api/webhook/zalo/1");
         result.UpdatedAt.ShouldBe(1789021705096);
         result.Verification!.Ok.ShouldBe(true);
         result.Verification.Outcome.ShouldBe("webhook.ok");
         var body = handler.RequestBodies[0];
-        body.ShouldContain("\"url\":\"https://zalo.tannhatcms.io.vn/api/zalo/webhook/1\"");
-        body.ShouldContain("\"secret_token\":\"s3cret\"");
+        body.ShouldContain("\"url\":\"https://zalo.tannhatcms.io.vn/api/webhook/zalo/1\"");
+        body.ShouldContain("\"secret_token\":\"s3cret-t0ken\"");
     }
 
     [Test]
@@ -176,11 +218,11 @@ public class SendTests : ZaloBotClientTestBase
         // Endpoint bị chặn (Cloudflare 403): API call vẫn ok=true nhưng verification.ok=false
         var handler = new FakeHttpMessageHandler();
         handler.EnqueueJson("""
-            {"ok":true,"result":{"url":"https://zalo.tannhatcms.io.vn/api/zalo/webhook/1","updated_at":1789021753697,"verification":{"ok":false,"url":"https://zalo.tannhatcms.io.vn/api/zalo/webhook/1","outcome":"webhook.http.403","hint":"Your server or CDN rejected the request with 403. Check WAF / Cloudflare rules, any IP allowlist, and that the User-Agent \"Java/<version>\" is permitted."}},"error_code":0}
+            {"ok":true,"result":{"url":"https://zalo.tannhatcms.io.vn/api/webhook/zalo/1","updated_at":1789021753697,"verification":{"ok":false,"url":"https://zalo.tannhatcms.io.vn/api/webhook/zalo/1","outcome":"webhook.http.403","hint":"Your server or CDN rejected the request with 403. Check WAF / Cloudflare rules, any IP allowlist, and that the User-Agent \"Java/<version>\" is permitted."}},"error_code":0}
             """);
         var client = CreateClient(handler);
 
-        var result = await client.SetWebhookAsync("https://zalo.tannhatcms.io.vn/api/zalo/webhook/1");
+        var result = await client.SetWebhookAsync("https://zalo.tannhatcms.io.vn/api/webhook/zalo/1", "s3cret-t0ken");
 
         result.Verification!.Ok.ShouldBe(false);
         result.Verification.Outcome.ShouldBe("webhook.http.403");
@@ -194,21 +236,22 @@ public class SendTests : ZaloBotClientTestBase
         handler.EnqueueJson("""{"ok":true}""");
         var client = CreateClient(handler);
 
-        var result = await client.SetWebhookAsync("https://app.example.com/hook", "s3cret");
+        var result = await client.SetWebhookAsync("https://app.example.com/hook", "s3cret-t0ken");
 
         result.Verification.ShouldBeNull();
     }
 
     [Test]
-    public async Task Should_OmitSecretToken_When_SetWebhookWithoutSecret()
+    public async Task Should_SendSecretToken_When_SetWebhookWithSecret()
     {
+        // Docs apis/setWebhook: secret_token BẮT BUỘC 8–256 ký tự — client validate trước khi gửi
         var handler = new FakeHttpMessageHandler();
         handler.EnqueueJson("""{"ok":true,"result":true}""");
         var client = CreateClient(handler);
 
-        await client.SetWebhookAsync("https://app.example.com/hook");
+        await client.SetWebhookAsync("https://app.example.com/hook", "s3cret-t0ken");
 
-        handler.RequestBodies[0].ShouldNotContain("secret_token");
+        handler.RequestBodies[0].ShouldContain("\"secret_token\":\"s3cret-t0ken\"");
     }
 
     [Test]

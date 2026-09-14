@@ -282,7 +282,7 @@ public class ErrorTaxonomyTests : ZaloBotClientTestBase
             client => client.SendStickerAsync("123", "s"),
             client => client.SendVoiceAsync("123", "v"),
             client => client.SendChatActionAsync("123", ChatAction.Typing),
-            client => client.SetWebhookAsync("https://app/hook"),
+            client => client.SetWebhookAsync("https://app/hook", "s3cret-t0ken"),
             client => client.TestWebhookAsync(),
             client => client.DeleteWebhookAsync(),
             client => client.GetWebhookInfoAsync(),
