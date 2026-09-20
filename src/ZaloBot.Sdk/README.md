@@ -210,7 +210,7 @@ AAA pattern. HTTP is faked with `FakeHttpMessageHandler` (enqueue JSON responses
 URLs/bodies) via `ZaloBotClientTestBase`. Run:
 
 ```powershell
-cd platform/server
+cd server
 dotnet test --filter "FullyQualifiedName~ZaloBot.Sdk.UnitTests"
 ```
 
