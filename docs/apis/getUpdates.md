@@ -1,4 +1,4 @@
-<!-- Source: https://bot.zapps.me/docs/apis/getUpdates/ (scraped 2026-09-14; upstream "Cập nhật lần cuối" ở đầu trang) -->
+<!-- Source: https://bot.zapps.me/docs/apis/getUpdates/ (scraped 2026-11-09; upstream "Cập nhật lần cuối" ở đầu trang) -->
 
 Cập nhật lần cuối: 22/10/2026
 
@@ -45,7 +45,7 @@ curl -X POST "https://bot-api.zaloplatforms.com/bot<BOT_TOKEN>/getUpdates" \
 
 ### Sample response
 
-Dữ liệu tin nhắn nhận được sẽ là dạng JSON object, tham khảo dữ liệu mẫu tương tự tại [Webhook](/docs/webhook/).
+Trường `result` có cấu trúc giống body sự kiện [Webhook](../webhook.md).
 ```
 {
   "ok": true,
