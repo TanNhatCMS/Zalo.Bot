@@ -232,9 +232,15 @@ internal sealed class ZaloSdkHttpSender
     {
         if (typeof(TResponse) == typeof(Update[]))
         {
-            var updates = hasResult && result.ValueKind == JsonValueKind.Array
-                ? result.EnumerateArray().Select(ZaloSdkPayloadMapper.ParseUpdate).ToArray()
-                : [];
+            // Docs getUpdates 22/10/2026: result là MỘT object sự kiện (cùng cấu trúc body webhook).
+            // Vẫn chấp nhận mảng (dạng Telegram / payload cũ). Object không có message/event_name = không có sự kiện.
+            Update[] updates = !hasResult ? []
+                : result.ValueKind == JsonValueKind.Array
+                    ? result.EnumerateArray().Select(ZaloSdkPayloadMapper.ParseUpdate).ToArray()
+                    : result.ValueKind == JsonValueKind.Object
+                      && (result.TryGetProperty("message", out _) || result.TryGetProperty("event_name", out _))
+                        ? [ZaloSdkPayloadMapper.ParseUpdate(result)]
+                        : [];
             return (TResponse)(object)updates;
         }
 

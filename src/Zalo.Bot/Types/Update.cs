@@ -33,4 +33,14 @@ public partial class Update
 
     /// <summary>URL of the media (photo/voice/sticker) when applicable</summary>
     public string? MediaUrl { get; set; }
+
+    /// <summary>Raw <c>message.message_type</c> per docs (22/10/2026): "CHAT_TEXT", "CHAT_PHOTO",
+    /// "CHAT_STICKER" or "CHAT_VOICE". Null when the platform omits it (optional field).</summary>
+    public string? MessageType { get; set; }
+
+    /// <summary>Raw <c>message.chat.chat_type</c>: "PRIVATE" (1-1 conversation) or "GROUP" (group, Beta).</summary>
+    public string? ChatType { get; set; }
+
+    /// <summary><c>message.from.is_bot</c> — whether the sender is a bot. Null when absent.</summary>
+    public bool? FromIsBot { get; set; }
 }

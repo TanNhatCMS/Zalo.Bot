@@ -10,7 +10,7 @@
 
   <!-- Version: CI ghi đè bằng tag (vX.Y.Z → X.Y.Z) hoặc thêm VersionSuffix ci.<run> cho build không phải tag. -->
   <PropertyGroup Label="Package">
-    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionPrefix>1.0.1</VersionPrefix>
     <Authors>TanNhatCMS</Authors>
     <Copyright>Copyright © TanNhatCMS</Copyright>
     <RepositoryUrl>https://github.com/TanNhatCMS/Zalo.Bot</RepositoryUrl>

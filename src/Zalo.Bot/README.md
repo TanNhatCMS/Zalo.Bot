@@ -84,8 +84,23 @@ ignored, never throw.
   - Non-object body or object with none of `ok`/`error_code`/`description` → `InvalidJsonException`
     with a **token-sanitized** body excerpt.
 - Defensive mapping (`Internal/ZaloSdkPayloadMapper`): unknown shapes never throw — unrecognized
-  updates map to `ContentType.Unknown`, malformed results to empty models. `getUpdates` elements
-  and webhook payloads (which arrive wrapped as `{ok, result:{...}}`) both parse via `ParseUpdate`.
+  updates map to `ContentType.Unknown`, malformed results to empty models. `getUpdates` results
+  and webhook bodies both parse via `ParseUpdate`.
+
+## Update payload (docs 22/10/2026)
+
+- **getUpdates**: `result` is **one event object** `{event_name, message}` (same shape as the webhook
+  body). `GetUpdatesAsync` returns it as a 1-element `Update[]`; an array `result` (older/Telegram-style
+  payloads) is still accepted; `{}`/`null` → empty array. The documented parameter is only `timeout`;
+  the SDK also sends `offset`/`limit` for compatibility (the platform ignores unknown fields) and the
+  docs define no `update_id`, so `UpdateId` is `0` unless the platform sends one.
+- **Webhook body**: `{event_name, message}` at the top level (no `{ok, result}` wrapper any more —
+  the wrapper is still unwrapped when present).
+- **Classification**: `message.message_type` wins (`CHAT_TEXT`/`CHAT_PHOTO`/`CHAT_STICKER`/`CHAT_VOICE`);
+  without it the type is inferred from the fields present. Photos read `photo_url` (falls back to the
+  legacy `photo`); a photo caption goes to `Text` while `ContentType` stays `Photo`; stickers prefer
+  `url` over the sticker code; voice reads `voice_url`.
+- **Extra fields on `Update`**: `MessageType`, `ChatType` (`PRIVATE`/`GROUP`), `FromIsBot`.
 
 ## sendMessage rich text
 

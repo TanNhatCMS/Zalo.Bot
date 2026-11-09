@@ -44,32 +44,49 @@ internal static class ZaloSdkPayloadMapper
 
         var text = TryGetString(message, "text") ?? TryGetString(message, "caption");
         update.Text = text;
-        if (text is not null)
+        update.MessageType = TryGetString(message, "message_type");
+
+        // Docs 22/10/2026: message_type (CHAT_TEXT/CHAT_PHOTO/CHAT_STICKER/CHAT_VOICE) là nguồn phân loại tin cậy nhất;
+        // thiếu hoặc giá trị lạ → suy luận theo trường có mặt (tương thích payload cũ).
+        var classified = update.MessageType switch
         {
-            update.ContentType = ContentType.Text;
-        }
-        else if (message.TryGetProperty("photo", out var photo))
+            "CHAT_TEXT" => SetText(update),
+            "CHAT_PHOTO" => SetMedia(update, ContentType.Photo, PhotoUrl(message)),
+            "CHAT_STICKER" => SetMedia(update, ContentType.Sticker, StickerUrl(message)),
+            "CHAT_VOICE" => SetMedia(update, ContentType.Voice, TryGetString(message, "voice_url")),
+            _ => false,
+        };
+
+        if (!classified)
         {
-            update.ContentType = ContentType.Photo;
-            update.MediaUrl = ExtractUrl(photo);
-        }
-        else if (message.TryGetProperty("voice_url", out var voiceUrl))
-        {
-            update.ContentType = ContentType.Voice;
-            update.MediaUrl = ExtractUrl(voiceUrl);
-        }
-        else if (message.TryGetProperty("sticker", out var sticker))
-        {
-            update.ContentType = ContentType.Sticker;
-            // Docs: sticker id + url riêng biệt — url là nguồn hiển thị, id chỉ là fallback
-            update.MediaUrl = TryGetString(message, "url") ?? ExtractUrl(sticker);
-        }
-        else if (message.TryGetProperty("action", out var action) && action.ValueKind == JsonValueKind.String)
-        {
-            update.ContentType = ContentType.ChatAction;
-            update.MediaUrl = null;
+            if (text is not null && !HasPhoto(message))
+            {
+                update.ContentType = ContentType.Text;
+            }
+            else if (HasPhoto(message))
+            {
+                // Ảnh (kể cả có caption): Text giữ caption, MediaUrl là ảnh — photo_url (docs mới) hoặc photo (cũ).
+                SetMedia(update, ContentType.Photo, PhotoUrl(message));
+            }
+            else if (message.TryGetProperty("voice_url", out var voiceUrl))
+            {
+                SetMedia(update, ContentType.Voice, ExtractUrl(voiceUrl));
+            }
+            else if (message.TryGetProperty("sticker", out _))
+            {
+                SetMedia(update, ContentType.Sticker, StickerUrl(message));
+            }
+            else if (message.TryGetProperty("action", out var action) && action.ValueKind == JsonValueKind.String)
+            {
+                update.ContentType = ContentType.ChatAction;
+                update.MediaUrl = null;
+            }
         }
 
+        update.ChatType = TryGetString(message, "chat", "chat_type");
+        update.FromIsBot = message.TryGetProperty("from", out var from) && from.ValueKind == JsonValueKind.Object
+            ? TryGetBool(from, "is_bot")
+            : null;
         update.ChatId = TryGetString(message, "chat", "id");
         update.FromUserId = TryGetString(message, "from", "id");
         update.FromDisplayName = TryGetString(message, "from", "display_name")
@@ -176,6 +193,32 @@ internal static class ZaloSdkPayloadMapper
         JsonValueKind.Number => element.TryGetInt64(out var number) && number != 0,
         _ => false,
     };
+
+    private static bool SetText(Update update)
+    {
+        update.ContentType = ContentType.Text;
+        return true;
+    }
+
+    private static bool SetMedia(Update update, ContentType contentType, string? mediaUrl)
+    {
+        update.ContentType = contentType;
+        update.MediaUrl = mediaUrl;
+        return true;
+    }
+
+    private static bool HasPhoto(JsonElement message)
+        => message.TryGetProperty("photo_url", out _) || message.TryGetProperty("photo", out _);
+
+    /// <summary>photo_url (docs 22/10/2026) hoặc photo (payload cũ: string URL hoặc object có url).</summary>
+    private static string? PhotoUrl(JsonElement message)
+        => TryGetString(message, "photo_url")
+            ?? (message.TryGetProperty("photo", out var photo) ? ExtractUrl(photo) : null);
+
+    /// <summary>Docs: sticker là mã, url là ảnh hiển thị — url ưu tiên, mã sticker chỉ là fallback.</summary>
+    private static string? StickerUrl(JsonElement message)
+        => TryGetString(message, "url")
+            ?? (message.TryGetProperty("sticker", out var sticker) ? ExtractUrl(sticker) : null);
 
     /// <summary>Extracts a media URL from a property that may be a string or an object with a "url" field.</summary>
     private static string? ExtractUrl(JsonElement property) => property.ValueKind switch
