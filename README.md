@@ -162,7 +162,7 @@ Push tag `vX.Y.Z` sẽ pack phiên bản `X.Y.Z`, tạo GitHub Release kèm `.nu
 bằng [Trusted Publishing] — GitHub cấp OIDC token, nuget.org đổi lấy API key tạm 1 giờ, **không lưu API key nào trong repo**.
 
 ```bash
-git tag v1.0.1 && git push origin v1.0.1
+git tag v1.0.2 && git push origin v1.0.2
 ```
 
 ## 🗂 Tham khảo
