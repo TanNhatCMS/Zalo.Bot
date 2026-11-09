@@ -1,7 +1,7 @@
 # Zalo.Bot
 
 Independent .NET 10 client library for the **Zalo Bot API** (docs: <https://bot.zapps.me/docs>;
-offline copy in [docs/](docs/) — scraped 2026-09-14, all 21 pages incl. 11 API references).
+offline copy in [docs/](https://github.com/TanNhatCMS/Zalo.Bot/tree/main/docs) — scraped 2026-09-14, all 21 pages incl. 11 API references).
 Adapted from [Telegram.Bot](https://github.com/TelegramBots/Telegram.Bot) (MIT — see
 `LICENSE-Telegram.Bot.txt`), pruned to the **11 methods** the Zalo Bot API exposes, and extended
 with an official-error-code taxonomy, a retry/backoff pipeline and access-token hygiene.

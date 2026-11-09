@@ -53,6 +53,6 @@ mã lỗi, mã outcome webhook).
 
 ## Đối chiếu nhanh với SDK
 
-Mỗi API method trên có request type tương ứng trong `Zalo.Bot/Requests/`
+Mỗi API method trên có request type tương ứng trong `src/Zalo.Bot/Requests/`
 (`SendMessageRequest.cs` → `apis/sendMessage.md`, ...) và extension method trong
 `ZaloBotClientExtensions.ApiMethods.cs` — bảng mapping đầy đủ ở [../README.md](../README.md#api-methods-all-of-them).

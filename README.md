@@ -137,6 +137,6 @@ git tag v1.0.1 && git push origin v1.0.1
 [Trusted Publishing]: https://learn.microsoft.com/nuget/nuget-org/trusted-publishing
 [Issues]: https://github.com/TanNhatCMS/Zalo.Bot/issues
 [src/Zalo.Bot/README.md]: src/Zalo.Bot/README.md
-[offline docs]: src/Zalo.Bot/docs
+[offline docs]: docs
 [Test Coverage]: https://github.com/TanNhatCMS/Zalo.Bot/actions/workflows/coverage.yml
 [Build & Pack]: .github/workflows/nuget.yml
