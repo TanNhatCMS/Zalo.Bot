@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ZaloBot.Sdk\ZaloBot.Sdk.csproj" />
+    <ProjectReference Include="..\..\src\ZaloBot.Sdk\ZaloBot.Sdk.csproj" />
   </ItemGroup>
 
 </Project>
