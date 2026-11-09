@@ -97,12 +97,41 @@ Console.ReadLine();
 > Webhook và getUpdates **loại trừ nhau** trên Zalo: gọi `DeleteWebhookAsync()` trước khi polling.
 > Production nên dùng webhook — parse body JSON của webhook bằng `ZaloBotClient.ParseWebhookUpdate(JsonElement)`.
 
+### Lấy token bằng QR (không cần nhập token tay)
+
+`ZaloBotLoginClient` port luồng login QR từ openclaw-zaloclawbot: xin session → lấy `LoginUrl`,
+FE tự vẽ mã QR từ link đó (SDK **không** tạo mã QR, không thêm package nào) → chờ quét xong →
+nhận `BotToken` rồi dùng như token thường. Chi tiết + code mẫu đầy đủ trong
+[src/Zalo.Bot/README.md](src/Zalo.Bot/README.md) (mục "QR login").
+
+```csharp
+using Zalo.Bot;
+
+var login = new ZaloBotLoginClient();
+var result = await login.LoginAsync(session =>
+{
+    ShowQrCode(session.LoginUrl); // FE vẽ QR từ link; gọi lại mỗi khi có session mới
+    return Task.CompletedTask;
+});
+if (!result.IsConnected) return; // hết hạn/timeout: xin session mới để có QR mới
+
+var bot = new ZaloBotClient(result.BotToken!);
+await bot.SendMessageAsync(chatId: "5128471675483426707", text: "Xin chào từ .NET!");
+```
+
+Lưu ý: `request-login` là GET không tham số, **không có callback** báo login xong — chỉ biết
+quét xong bằng cách poll `get-login-status` mỗi 1,5 giây; session/QR hết hạn sau 5 phút thì xin
+session mới. SDK không lưu credential — tự lưu token an toàn phía caller.
+
 ## ✨ Tính năng
 
 - **Đủ 11 method** của Zalo Bot API: `getMe`, `getUpdates`, `sendMessage` (kèm `parse_mode` và `text_styles`),
   `sendPhoto`, `sendSticker`, `sendVoice`, `sendChatAction`, `setWebhook`, `testWebhook`, `deleteWebhook`, `getWebhookInfo`.
 - **Polling dựng sẵn** theo mô hình Telegram.Bot: `StartReceiving`, `ReceiveAsync`, `IUpdateHandler`,
   `DropPendingUpdatesAsync`, hoặc sự kiện `OnUpdate`/`OnError`.
+- **Login QR lấy token** (`ZaloBotLoginClient`, port từ openclaw-zaloclawbot): xin session → FE vẽ QR
+  từ `LoginUrl` (SDK không tạo QR) → poll `get-login-status` mỗi 1,5 giây cho tới khi quét xong →
+  nhận `BotToken`; session hết hạn sau 5 phút thì xin session mới. Không có callback báo login xong.
 - **Phân loại lỗi chính thức**: 401 → `ZaloBotTokenException`, 408/429 → retry có backoff (`ZaloBotRetryableException`),
   403 → retry đúng một lần, lỗi mạng → `ZaloBotNetworkException`.
 - **Vệ sinh token**: token chỉ nằm trong URL request; mọi message exception và trích đoạn body đều đi qua `TokenSanitizer`.

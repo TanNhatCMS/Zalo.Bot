@@ -24,6 +24,79 @@ Message sent = await client.SendMessageAsync("5128471675483426707", "Hello bot")
 - Events `OnMakingApiRequest` / `OnApiResponseReceived` (`AsyncEventHandler<...>`) allow
   observation of every request/response — used by the app adapter for logging.
 
+## QR login (get a bot token without storing one)
+
+`ZaloBotLoginClient` ports the QR login flow from openclaw-zaloclawbot
+(`packages/plugin/src/auth/login-qr.ts`). It is **not** one of the 11 Bot API methods: it talks
+to the Zalo session service at `https://bot.zaloplatforms.com/agent/*` and needs no bot token —
+that is why it is a separate client, not a method on `ZaloBotClient`.
+
+How it works:
+
+![QR login flow: RequestLoginAsync returns LoginUrl and Zbsk, the frontend renders the QR from LoginUrl, the user scans it with the Zalo app, WaitForLoginAsync polls get-login-status every 1.5 s until the scan is confirmed, expired sessions are refreshed up to 3 times, then a ZaloBotClient is created from the returned bot token.](docs/qr-login-flow.svg)
+
+1. `RequestLoginAsync()` — `GET {sessionService}/agent/request-login` returns a
+   `ZaloLoginSession`: `LoginUrl` (the URL to render as a QR code) + `Zbsk` (the session key).
+   The session — and its QR — expires after 5 minutes.
+2. The **frontend renders the QR code from `LoginUrl`**; the SDK never renders QR codes and
+   adds no QR dependency. The user scans it with the Zalo app.
+3. `WaitForLoginAsync(session)` polls `GET {sessionService}/agent/get-login-status?zbsk=...`
+   every 1.5 s until the scan is confirmed, the session expires, or the timeout elapses.
+   A confirmed result carries `BotToken` (+ `BotId`/`OwnerId`/`OaId` when reported) — store it
+   securely yourself and create a `ZaloBotClient` from it. The SDK never stores credentials.
+   Optionally verify it with `GetMeAsync()` (not built into login, so the flow stays simple).
+
+```csharp
+var login = new ZaloBotLoginClient(); // defaults: 1.5 s poll, 5 min session, 3 attempts
+
+// 1. Ask for a session and show its URL as a QR code (frontend renders it).
+ZaloLoginSession session = await login.RequestLoginAsync();
+ShowQrCode(session.LoginUrl); // your UI: render the QR from this link
+
+// 2. Wait for the user to scan it.
+ZaloLoginResult result = await login.WaitForLoginAsync(session);
+if (!result.IsConnected)
+{
+    Console.WriteLine($"Login did not complete: {result.Status} — {result.Message}");
+    return; // session expired/timed out: request a fresh one (step 1) for a new QR
+}
+
+// 3. Use the token like any other bot token.
+var bot = new ZaloBotClient(result.BotToken!);
+User me = await bot.GetMeAsync(); // optional verification
+await bot.SendMessageAsync("5128471675483426707", "Xin chào từ .NET!");
+```
+
+`LoginAsync(onSessionReady)` is the same flow as a convenience: it requests a session, invokes
+your callback with it (render the QR there), waits, and — when a session expires or times out —
+requests a **fresh** session (up to `MaxLoginAttempts`, default 3) and invokes the callback again
+with the new URL, so the frontend always sees every new QR and can re-render it. It returns the
+first connected result, or the last expired/timed-out one.
+
+```csharp
+ZaloLoginResult result = await login.LoginAsync(session =>
+{
+    ShowQrCode(session.LoginUrl); // called again for every fresh session
+    return Task.CompletedTask;
+});
+```
+
+**No callback for login.** `request-login` is a parameterless GET — it registers no callback or
+`redirect_url` anywhere, and the login flow has no callback endpoint. The scan confirmation is
+learned **only by polling** `get-login-status`: the login URL is a Zalo page, Zalo marks the
+session on their server, and this side finds out by polling every 1.5 s. Do not confuse this
+with **webhooks** (`setWebhook`): a webhook is a callback too, but for **message updates after
+login** — Zalo pushes updates to your `webhookBaseUrl` — not for reporting that the login
+finished. The port therefore keeps the polling design and adds no login-callback endpoint.
+
+Configuration (`ZaloBotLoginOptions`): `SessionServiceUrl` (default
+`https://bot.zaloplatforms.com`, overridable for a compatible server), `PollInterval` (default
+1.5 s), `SessionTimeout` (default 5 min), `MaxLoginAttempts` (default 3, `LoginAsync` only),
+`RequestTimeout` (per-request HTTP timeout, default 30 s). All methods take a
+`CancellationToken`; cancelling the wait throws `OperationCanceledException`. Network errors
+while polling are retried until the deadline; HTTP 498 (or `code`/`error_code` 498) means the
+session expired. The `zbsk` session key and the bot token never appear in exception messages.
+
 ## API methods (all of them)
 
 Extension methods live in `ZaloBotClientExtensions.ApiMethods.cs`; request objects in `Requests/`;
