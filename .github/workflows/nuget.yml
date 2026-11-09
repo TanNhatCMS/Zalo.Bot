@@ -79,9 +79,36 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" out/* --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
 
-      # Tuỳ chọn: chỉ chạy khi repo có secret NUGET_API_KEY.
-      - name: Push to nuget.org
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        if: env.NUGET_API_KEY != ''
-        run: dotnet nuget push "out/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+  # Trusted Publishing (https://learn.microsoft.com/nuget/nuget-org/trusted-publishing):
+  # OIDC token của GitHub → nuget.org đổi lấy API key tạm (sống 1 giờ) — không lưu API key dài hạn.
+  # Policy trên nuget.org: Owner=TanNhatCMS, Repository=Zalo.Bot, Workflow File=nuget.yml, Environment=nuget.
+  # Chỉ chạy khi repo có biến NUGET_USER (Settings → Secrets and variables → Actions → Variables) = tên profile nuget.org.
+  publish-nuget:
+    if: startsWith(github.ref, 'refs/tags/v') && vars.NUGET_USER != ''
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: nuget
+      url: https://www.nuget.org/packages/ZaloBot.Sdk
+    permissions:
+      id-token: write # cho phép GitHub phát OIDC token cho job này
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: nuget
+          path: out
+
+      # Lấy API key ngay trước khi push (key hết hạn sau 1 giờ, mỗi OIDC token chỉ đổi được 1 key).
+      - name: NuGet login (OIDC → API key tạm)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      # Push .nupkg; .snupkg cùng tên được dotnet nuget push tự đẩy kèm lên symbol server.
+      - name: NuGet push
+        run: >-
+          dotnet nuget push "out/*.nupkg"
+          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate

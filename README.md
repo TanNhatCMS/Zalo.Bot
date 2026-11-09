@@ -1,6 +1,7 @@
 # .NET Client for Zalo Bot API
 
-[![Release](https://img.shields.io/github/v/release/TanNhatCMS/Zalo.Bot?style=flat-square&label=ZaloBot.Sdk&color=0068ff)](https://github.com/TanNhatCMS/Zalo.Bot/releases)
+[![NuGet](https://img.shields.io/nuget/vpre/ZaloBot.Sdk.svg?style=flat-square&label=ZaloBot.Sdk&color=0068ff)](https://www.nuget.org/packages/ZaloBot.Sdk)
+[![Downloads](https://img.shields.io/nuget/dt/ZaloBot.Sdk.svg?style=flat-square&label=Downloads)](https://www.nuget.org/packages/ZaloBot.Sdk)
 [![Zalo Bot API](https://img.shields.io/badge/Zalo_Bot_API-11_methods-0068ff.svg?style=flat-square)](https://bot.zapps.me/docs)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512bd4.svg?style=flat-square)](https://dotnet.microsoft.com/)
 [![Build](https://img.shields.io/github/actions/workflow/status/TanNhatCMS/Zalo.Bot/nuget.yml?branch=main&style=flat-square&label=build)](https://github.com/TanNhatCMS/Zalo.Bot/actions/workflows/nuget.yml)
@@ -16,28 +17,19 @@ cần cho production: phân loại mã lỗi chính thức, retry/backoff, và *
 
 | Package | Tài liệu SDK | Tài liệu Zalo Bot API | Báo lỗi |
 |:-------:|:------------:|:---------------------:|:-------:|
-| [GitHub Releases] | [src/ZaloBot.Sdk/README.md] | [bot.zapps.me/docs][Zalo Bot API] | [Issues] |
-| `.nupkg` của từng phiên bản | Wire contract, polling, lỗi & retry | Tài liệu chính thức (bản offline trong [`docs/`][offline docs]) | Báo lỗi, đề xuất tính năng |
+| [nuget.org][NuGet package] | [src/ZaloBot.Sdk/README.md] | [bot.zapps.me/docs][Zalo Bot API] | [Issues] |
+| Feed chính thức (bản `.nupkg` cũng có trên [GitHub Releases]) | Wire contract, polling, lỗi & retry | Tài liệu chính thức (bản offline trong [`docs/`][offline docs]) | Báo lỗi, đề xuất tính năng |
 
 ## 🔨 Bắt đầu
 
 ### Cài đặt
 
-Gói chưa phát hành trên nuget.org. Tải `ZaloBot.Sdk.<version>.nupkg` từ [GitHub Releases], đặt vào một thư mục
-(ví dụ `packages/`) rồi khai báo feed cục bộ trong `nuget.config`:
-
-```xml
-<configuration>
-  <packageSources>
-    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-    <add key="local" value="packages" />
-  </packageSources>
-</configuration>
-```
-
 ```bash
-dotnet add package ZaloBot.Sdk --version 1.0.0
+dotnet add package ZaloBot.Sdk
 ```
+
+Mỗi phiên bản cũng có `.nupkg`/`.snupkg` đính kèm trên [GitHub Releases] — dùng khi cần feed cục bộ
+(thêm `<add key="local" value="packages" />` vào `nuget.config`).
 
 ### Gửi tin nhắn đầu tiên
 
@@ -112,12 +104,20 @@ dotnet test ZaloBot.slnx -c Release --no-build
 ## 📦 Phát hành
 
 Workflow [`nuget.yml`][Build & Pack] build, test và pack trên mỗi push/PR (`X.Y.Z-ci.<run>`, artifact `nuget`).
-Push tag `vX.Y.Z` sẽ pack phiên bản `X.Y.Z` và tạo GitHub Release kèm `.nupkg`/`.snupkg`
-(nếu repo có secret `NUGET_API_KEY` thì push luôn lên nuget.org).
+Push tag `vX.Y.Z` sẽ pack phiên bản `X.Y.Z`, tạo GitHub Release kèm `.nupkg`/`.snupkg`, rồi publish lên nuget.org
+bằng [Trusted Publishing] — GitHub cấp OIDC token, nuget.org đổi lấy API key tạm 1 giờ, **không lưu API key nào trong repo**.
 
 ```bash
 git tag v1.0.1 && git push origin v1.0.1
 ```
+
+Thiết lập một lần:
+
+1. **nuget.org** → tên tài khoản → **Trusted Publishing** → thêm policy:
+   Repository Owner `TanNhatCMS`, Repository `Zalo.Bot`, Workflow File `nuget.yml`, Environment `nuget`.
+2. **GitHub** → Settings → Secrets and variables → Actions → **Variables** → `NUGET_USER` = tên profile nuget.org
+   (không phải email). Thiếu biến này thì job `publish-nuget` được bỏ qua.
+3. (Tuỳ chọn) Settings → Environments → `nuget`: thêm *Required reviewers* để duyệt tay trước mỗi lần publish.
 
 ## 🗂 Tham khảo
 
@@ -137,6 +137,8 @@ git tag v1.0.1 && git push origin v1.0.1
 [_Giới thiệu Zalo Bot_]: https://bot.zapps.me/docs
 [Telegram.Bot]: https://github.com/TelegramBots/Telegram.Bot
 [GitHub Releases]: https://github.com/TanNhatCMS/Zalo.Bot/releases
+[NuGet package]: https://www.nuget.org/packages/ZaloBot.Sdk
+[Trusted Publishing]: https://learn.microsoft.com/nuget/nuget-org/trusted-publishing
 [Issues]: https://github.com/TanNhatCMS/Zalo.Bot/issues
 [src/ZaloBot.Sdk/README.md]: src/ZaloBot.Sdk/README.md
 [offline docs]: src/ZaloBot.Sdk/docs
