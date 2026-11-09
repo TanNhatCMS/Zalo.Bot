@@ -24,19 +24,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
-      # coverlet.collector (đã có trong project test) thu coverage dạng Cobertura.
+      # coverlet.collector (đã có trong project test) thu coverage dạng Cobertura; cấu hình ở coverlet.runsettings.
       - name: Test with coverage
-        run: >
+        run: >-
           dotnet test ZaloBot.slnx -c Release
           --collect:"XPlat Code Coverage"
+          --settings coverlet.runsettings
           --results-directory coverage
           --logger trx
-          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
-             DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include=[ZaloBot.Sdk]*
 
       - name: Generate coverage report
         uses: danielpalme/ReportGenerator-GitHub-Action@5
@@ -49,7 +48,7 @@ jobs:
       - name: Publish summary
         run: cat coverage-report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: coverage-report
