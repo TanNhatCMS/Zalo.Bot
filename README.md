@@ -5,6 +5,7 @@
 [![Zalo Bot API](https://img.shields.io/badge/Zalo_Bot_API-11_methods-0068ff.svg?style=flat-square)](https://bot.zapps.me/docs)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512bd4.svg?style=flat-square)](https://dotnet.microsoft.com/)
 [![Build](https://img.shields.io/github/actions/workflow/status/TanNhatCMS/Zalo.Bot/nuget.yml?branch=main&style=flat-square&label=build)](https://github.com/TanNhatCMS/Zalo.Bot/actions/workflows/nuget.yml)
+[![License](https://img.shields.io/github/license/TanNhatCMS/Zalo.Bot?style=flat-square&label=License)](LICENSE)
 [![Coverage](https://img.shields.io/github/actions/workflow/status/TanNhatCMS/Zalo.Bot/coverage.yml?branch=main&style=flat-square&label=coverage)](https://github.com/TanNhatCMS/Zalo.Bot/actions/workflows/coverage.yml)
 
 **ZaloBot.Sdk** là thư viện .NET để gọi [Zalo Bot API] — giao diện HTTP cho lập trình viên xây dựng chatbot trên [Zalo].
@@ -128,7 +129,7 @@ Thiết lập một lần:
 <br/>
 
 > [!NOTE]
-> Một phần mã nguồn chuyển thể từ [Telegram.Bot] theo giấy phép MIT — xem [`LICENSE-Telegram.Bot.txt`](src/ZaloBot.Sdk/LICENSE-Telegram.Bot.txt).
+> Phát hành theo giấy phép [MIT](LICENSE). Một phần mã nguồn chuyển thể từ [Telegram.Bot] theo giấy phép MIT — xem [`LICENSE-Telegram.Bot.txt`](src/ZaloBot.Sdk/LICENSE-Telegram.Bot.txt).
 
 <!-- ---- -->
 
