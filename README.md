@@ -115,14 +115,6 @@ bằng [Trusted Publishing] — GitHub cấp OIDC token, nuget.org đổi lấy 
 git tag v1.0.1 && git push origin v1.0.1
 ```
 
-Thiết lập một lần:
-
-1. **nuget.org** → tên tài khoản → **Trusted Publishing** → thêm policy:
-   Repository Owner `TanNhatCMS`, Repository `Zalo.Bot`, Workflow File `nuget.yml`, Environment `nuget`.
-2. **GitHub** → Settings → Secrets and variables → Actions → **Variables** → `NUGET_USER` = tên profile nuget.org
-   (không phải email). Thiếu biến này thì job `publish-nuget` được bỏ qua.
-3. (Tuỳ chọn) Settings → Environments → `nuget`: thêm *Required reviewers* để duyệt tay trước mỗi lần publish.
-
 ## 🗂 Tham khảo
 
 - [Tài liệu SDK chi tiết][src/Zalo.Bot/README.md] — wire contract, rich text, polling, lỗi & retry, cách thêm method mới
