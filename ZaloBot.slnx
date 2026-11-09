@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/ZaloBot.Sdk/ZaloBot.Sdk.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/ZaloBot.Sdk.UnitTests/ZaloBot.Sdk.UnitTests.csproj" />
-  </Folder>
-</Solution>

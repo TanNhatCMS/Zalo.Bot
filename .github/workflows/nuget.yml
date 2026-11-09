@@ -43,16 +43,16 @@ jobs:
           fi
 
       - name: Restore
-        run: dotnet restore ZaloBot.slnx
+        run: dotnet restore Zalo.Bot.slnx
 
       - name: Build
-        run: dotnet build ZaloBot.slnx -c Release --no-restore ${{ steps.version.outputs.args }}
+        run: dotnet build Zalo.Bot.slnx -c Release --no-restore ${{ steps.version.outputs.args }}
 
       - name: Test
-        run: dotnet test ZaloBot.slnx -c Release --no-build
+        run: dotnet test Zalo.Bot.slnx -c Release --no-build
 
       - name: Pack
-        run: dotnet pack ZaloBot.slnx -c Release --no-build -o out ${{ steps.version.outputs.args }}
+        run: dotnet pack Zalo.Bot.slnx -c Release --no-build -o out ${{ steps.version.outputs.args }}
 
       - uses: actions/upload-artifact@v7
         with:
@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: nuget
-      url: https://www.nuget.org/packages/ZaloBot.Sdk
+      url: https://www.nuget.org/packages/Zalo.Bot
     permissions:
       id-token: write # cho phép GitHub phát OIDC token cho job này
     steps:

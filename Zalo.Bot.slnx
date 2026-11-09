@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Zalo.Bot/Zalo.Bot.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Zalo.Bot.UnitTests/Zalo.Bot.UnitTests.csproj" />
+  </Folder>
+</Solution>

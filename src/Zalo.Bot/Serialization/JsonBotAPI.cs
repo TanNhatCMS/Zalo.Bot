@@ -1,0 +1,19 @@
+namespace Zalo.Bot;
+
+/// <summary>Static class offering JsonSerializerOptions configured for Zalo Bot API serialization</summary>
+public static class JsonBotAPI
+{
+    /// <summary>JsonSerializerOptions configured for Zalo Bot API serialization</summary>
+    public static JsonSerializerOptions Options { get; }
+
+    static JsonBotAPI() => Configure(Options = new());
+
+    /// <summary>Configure JsonSerializerOptions for Zalo Bot API serialization</summary>
+    /// <param name="options">JsonSerializerOptions to configure</param>
+    public static void Configure(JsonSerializerOptions options)
+    {
+        options.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+        options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
+        options.NumberHandling = JsonNumberHandling.AllowReadingFromString;
+    }
+}

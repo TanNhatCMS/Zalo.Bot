@@ -1,14 +1,17 @@
 # .NET Client for Zalo Bot API
 
-[![NuGet](https://img.shields.io/nuget/vpre/ZaloBot.Sdk.svg?style=flat-square&label=ZaloBot.Sdk&color=0068ff)](https://www.nuget.org/packages/ZaloBot.Sdk)
-[![Downloads](https://img.shields.io/nuget/dt/ZaloBot.Sdk.svg?style=flat-square&label=Downloads)](https://www.nuget.org/packages/ZaloBot.Sdk)
+[![NuGet](https://img.shields.io/nuget/vpre/Zalo.Bot.svg?style=flat-square&label=Zalo.Bot&color=0068ff)](https://www.nuget.org/packages/Zalo.Bot)
+[![Downloads](https://img.shields.io/nuget/dt/Zalo.Bot.svg?style=flat-square&label=Downloads)](https://www.nuget.org/packages/Zalo.Bot)
 [![Zalo Bot API](https://img.shields.io/badge/Zalo_Bot_API-11_methods-0068ff.svg?style=flat-square)](https://bot.zapps.me/docs)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512bd4.svg?style=flat-square)](https://dotnet.microsoft.com/)
 [![Build](https://img.shields.io/github/actions/workflow/status/TanNhatCMS/Zalo.Bot/nuget.yml?branch=main&style=flat-square&label=build)](https://github.com/TanNhatCMS/Zalo.Bot/actions/workflows/nuget.yml)
 [![License](https://img.shields.io/github/license/TanNhatCMS/Zalo.Bot?style=flat-square&label=License)](LICENSE)
 [![Coverage](https://img.shields.io/github/actions/workflow/status/TanNhatCMS/Zalo.Bot/coverage.yml?branch=main&style=flat-square&label=coverage)](https://github.com/TanNhatCMS/Zalo.Bot/actions/workflows/coverage.yml)
 
-**ZaloBot.Sdk** là thư viện .NET để gọi [Zalo Bot API] — giao diện HTTP cho lập trình viên xây dựng chatbot trên [Zalo].
+**Zalo.Bot** là thư viện .NET để gọi [Zalo Bot API] — giao diện HTTP cho lập trình viên xây dựng chatbot trên [Zalo].
+
+> [!IMPORTANT]
+> Gói trước đây có tên **`ZaloBot.Sdk`** (đã deprecated). Chuyển sang `Zalo.Bot`: đổi `PackageReference` và `using ZaloBot.Sdk…` → `using Zalo.Bot…` — API không đổi.
 
 Xem 👉 [_Giới thiệu Zalo Bot_] 👈 để hiểu Zalo Bot là gì và làm được những gì.
 
@@ -18,7 +21,7 @@ cần cho production: phân loại mã lỗi chính thức, retry/backoff, và *
 
 | Package | Tài liệu SDK | Tài liệu Zalo Bot API | Báo lỗi |
 |:-------:|:------------:|:---------------------:|:-------:|
-| [nuget.org][NuGet package] | [src/ZaloBot.Sdk/README.md] | [bot.zapps.me/docs][Zalo Bot API] | [Issues] |
+| [nuget.org][NuGet package] | [src/Zalo.Bot/README.md] | [bot.zapps.me/docs][Zalo Bot API] | [Issues] |
 | Feed chính thức (bản `.nupkg` cũng có trên [GitHub Releases]) | Wire contract, polling, lỗi & retry | Tài liệu chính thức (bản offline trong [`docs/`][offline docs]) | Báo lỗi, đề xuất tính năng |
 
 ## 🔨 Bắt đầu
@@ -26,7 +29,7 @@ cần cho production: phân loại mã lỗi chính thức, retry/backoff, và *
 ### Cài đặt
 
 ```bash
-dotnet add package ZaloBot.Sdk
+dotnet add package Zalo.Bot
 ```
 
 Mỗi phiên bản cũng có `.nupkg`/`.snupkg` đính kèm trên [GitHub Releases] — dùng khi cần feed cục bộ
@@ -35,7 +38,7 @@ Mỗi phiên bản cũng có `.nupkg`/`.snupkg` đính kèm trên [GitHub Releas
 ### Gửi tin nhắn đầu tiên
 
 ```csharp
-using ZaloBot.Sdk;
+using Zalo.Bot;
 
 var bot = new ZaloBotClient("YOUR_ACCESS_TOKEN");
 
@@ -48,8 +51,8 @@ await bot.SendMessageAsync(chatId: "5128471675483426707", text: "Xin chào từ 
 ### Echo bot (long polling)
 
 ```csharp
-using ZaloBot.Sdk;
-using ZaloBot.Sdk.Types;
+using Zalo.Bot;
+using Zalo.Bot.Types;
 
 using var cts = new CancellationTokenSource();
 var bot = new ZaloBotClient("YOUR_ACCESS_TOKEN");
@@ -98,8 +101,8 @@ JSON body, ánh xạ kết quả và từng nhánh của bảng mã lỗi. Tên 
 Workflow [Test Coverage] chạy trên mỗi push/PR và đăng báo cáo vào Job Summary.
 
 ```bash
-dotnet build ZaloBot.slnx -c Release
-dotnet test ZaloBot.slnx -c Release --no-build
+dotnet build Zalo.Bot.slnx -c Release
+dotnet test Zalo.Bot.slnx -c Release --no-build
 ```
 
 ## 📦 Phát hành
@@ -122,14 +125,14 @@ Thiết lập một lần:
 
 ## 🗂 Tham khảo
 
-- [Tài liệu SDK chi tiết][src/ZaloBot.Sdk/README.md] — wire contract, rich text, polling, lỗi & retry, cách thêm method mới
+- [Tài liệu SDK chi tiết][src/Zalo.Bot/README.md] — wire contract, rich text, polling, lỗi & retry, cách thêm method mới
 - [Zalo Bot API] — tài liệu chính thức ([bản offline][offline docs])
 - [Telegram.Bot] — thư viện gốc mà SDK được chuyển thể từ đó
 
 <br/>
 
 > [!NOTE]
-> Phát hành theo giấy phép [MIT](LICENSE). Một phần mã nguồn chuyển thể từ [Telegram.Bot] theo giấy phép MIT — xem [`LICENSE-Telegram.Bot.txt`](src/ZaloBot.Sdk/LICENSE-Telegram.Bot.txt).
+> Phát hành theo giấy phép [MIT](LICENSE). Một phần mã nguồn chuyển thể từ [Telegram.Bot] theo giấy phép MIT — xem [`LICENSE-Telegram.Bot.txt`](src/Zalo.Bot/LICENSE-Telegram.Bot.txt).
 
 <!-- ---- -->
 
@@ -138,10 +141,10 @@ Thiết lập một lần:
 [_Giới thiệu Zalo Bot_]: https://bot.zapps.me/docs
 [Telegram.Bot]: https://github.com/TelegramBots/Telegram.Bot
 [GitHub Releases]: https://github.com/TanNhatCMS/Zalo.Bot/releases
-[NuGet package]: https://www.nuget.org/packages/ZaloBot.Sdk
+[NuGet package]: https://www.nuget.org/packages/Zalo.Bot
 [Trusted Publishing]: https://learn.microsoft.com/nuget/nuget-org/trusted-publishing
 [Issues]: https://github.com/TanNhatCMS/Zalo.Bot/issues
-[src/ZaloBot.Sdk/README.md]: src/ZaloBot.Sdk/README.md
-[offline docs]: src/ZaloBot.Sdk/docs
+[src/Zalo.Bot/README.md]: src/Zalo.Bot/README.md
+[offline docs]: src/Zalo.Bot/docs
 [Test Coverage]: https://github.com/TanNhatCMS/Zalo.Bot/actions/workflows/coverage.yml
 [Build & Pack]: .github/workflows/nuget.yml

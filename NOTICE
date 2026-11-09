@@ -1,0 +1,6 @@
+Zalo.Bot
+Copyright (c) 2026 TanNhatCMS
+
+Portions of this software are adapted from Telegram.Bot
+(https://github.com/TelegramBots/Telegram.Bot), licensed under the MIT License —
+see src/ZaloBot.Sdk/LICENSE-Telegram.Bot.txt for its copyright notice.

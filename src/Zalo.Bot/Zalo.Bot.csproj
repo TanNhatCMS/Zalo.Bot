@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Zalo.Bot — Zalo Bot API client for .NET.
+    Adapted from Telegram.Bot (MIT) https://github.com/TelegramBots/Telegram.Bot — see LICENSE-Telegram.Bot.txt.
+    Pruned to the 11 methods the Zalo Bot API exposes and extended with an official-error-code
+    taxonomy, retry/backoff pipeline and access-token hygiene (token never appears in exceptions).
+    Leaf project: references no other solution project and no NuGet packages
+    (System.Text.Json is part of the net10.0 shared framework).
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>Zalo.Bot</RootNamespace>
+    <AssemblyName>Zalo.Bot</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <IsPackable>true</IsPackable>
+    <PackageId>Zalo.Bot</PackageId>
+    <Description>Zalo Bot API client for .NET — 11 API methods, official error-code taxonomy, retry/backoff pipeline, long polling and access-token hygiene.</Description>
+    <PackageTags>zalo;zalo-bot;bot;sdk;api-client</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="LICENSE-Telegram.Bot.txt" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <PropertyGroup Label="Warnings">
+    <NoWarn>$(NoWarn);CA1003</NoWarn> <!-- Change the event name to replace the type with a generic EventHandler,
+                                           for example EventHandler<T>, where T is a valid EventArgs -->
+    <NoWarn>$(NoWarn);CA1819</NoWarn> <!-- Properties should not return arrays-->
+    <NoWarn>$(NoWarn);CA1008</NoWarn> <!-- Add a member to enum that has a value of zero with a suggested
+                                           name of 'None' -->
+    <NoWarn>$(NoWarn);CA1056</NoWarn> <!-- Change the type of property from 'string' to 'System.Uri' -->
+    <NoWarn>$(NoWarn);CA1040</NoWarn> <!-- Avoid empty interfaces-->
+    <NoWarn>$(NoWarn);CA1822</NoWarn> <!-- Member does not access instance data and can be marked as static -->
+    <NoWarn>$(NoWarn);CA2225</NoWarn> <!-- Provide a method named 'ToEntity' or 'FromString' as an alternate
+                                           for operator op_Implicit -->
+    <NoWarn>$(NoWarn);CA1054</NoWarn> <!-- Change the type of parameter 'url' from 'string' to 'System.Uri', or
+                                           provide an overload to '(string, string)' that allows 'url' to be passed
+                                           as a 'System.Uri' object -->
+    <NoWarn>$(NoWarn);CA2234</NoWarn> <!-- Modify method to call
+                                           'HttpClient.GetAsync(Uri, HttpCompletionOption, CancellationToken)' instead
+                                           of 'HttpClient.GetAsync(string, HttpCompletionOption, CancellationToken)' -->
+    <NoWarn>$(NoWarn);CA1031</NoWarn> <!-- Catch a more specific allowed exception type, or rethrow the exception -->
+    <NoWarn>$(NoWarn);CA1716</NoWarn> <!-- Rename virtual/interface member so that it no longer conflicts with
+                                           a reserved language keyword -->
+    <NoWarn>$(NoWarn);CA1510</NoWarn> <!-- Use 'ArgumentNullException.ThrowIfNull' instead of explicitly throwing
+                                           a new exception instance -->
+    <NoWarn>$(NoWarn);MA0046</NoWarn> <!-- The delegate must return void -->
+    <NoWarn>$(NoWarn);MA0001;MA0042;MA0048;MA0051;MA0111;MA0113</NoWarn>
+    <NoWarn>$(NoWarn);IDE0079;IDE0130</NoWarn>
+    <NoWarn>$(NoWarn);CS0419</NoWarn> <!-- Ambiguous reference in cref attribute -->
+  </PropertyGroup>
+
+</Project>
