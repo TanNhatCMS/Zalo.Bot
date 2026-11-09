@@ -12,6 +12,10 @@
     .n { font-size: 13px; fill: #444; }
   </style>
 
+  <!-- Opaque background: without this the SVG is transparent and GitHub dark mode
+       renders it on a near-black canvas, making the dark text unreadable. -->
+  <rect x="0" y="0" width="860" height="1270" fill="#ffffff"/>
+
   <!-- Title -->
   <text x="430" y="34" text-anchor="middle" style="font-size: 20px; font-weight: 700; fill: #1a1a1a;">QR login flow — Zalo.Bot (.NET)</text>
   <text x="430" y="58" text-anchor="middle" class="s">ZaloBotLoginClient · bot.zaloplatforms.com/agent/* · polling only, no login callback</text>
