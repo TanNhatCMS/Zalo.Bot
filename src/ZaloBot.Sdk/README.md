@@ -209,9 +209,8 @@ using the SDK `Sdk.ZaloBotClient` created per call with the bot's access token
 AAA pattern. HTTP is faked with `FakeHttpMessageHandler` (enqueue JSON responses, inspect request
 URLs/bodies) via `ZaloBotClientTestBase`. Run:
 
-```powershell
-cd server
-dotnet test --filter "FullyQualifiedName~ZaloBot.Sdk.UnitTests"
+```bash
+dotnet test ZaloBot.slnx -c Release
 ```
 
 ## Adding a new API method (recipe)
