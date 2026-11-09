@@ -29,3 +29,7 @@ Workflow [`.github/workflows/nuget.yml`](.github/workflows/nuget.yml):
 ```bash
 git tag v1.0.1 && git push origin v1.0.1
 ```
+
+## Coverage
+
+Workflow [`.github/workflows/coverage.yml`](.github/workflows/coverage.yml) chạy test với `coverlet.collector`, sinh báo cáo bằng ReportGenerator (tóm tắt ở Job Summary, HTML trong artifact `coverage-report`).
