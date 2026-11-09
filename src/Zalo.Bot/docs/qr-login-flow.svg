@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 1270" width="860" height="1270" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="QR login flow: ZaloBotLoginClient requests a session, the frontend renders the QR from LoginUrl, the user scans it, WaitForLoginAsync polls get-login-status until connected, then a ZaloBotClient is created from the returned bot token.">
+  <title>QR login flow — Zalo.Bot (.NET)</title>
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0 0, 10 4, 0 8" fill="#555"/>
+    </marker>
+  </defs>
+  <style>
+    .t { font-size: 15px; font-weight: 700; fill: #1a1a1a; }
+    .s { font-size: 13px; fill: #444; }
+    .d { font-size: 12.5px; fill: #444; }
+    .n { font-size: 13px; fill: #444; }
+  </style>
+
+  <!-- Title -->
+  <text x="430" y="34" text-anchor="middle" style="font-size: 20px; font-weight: 700; fill: #1a1a1a;">QR login flow — Zalo.Bot (.NET)</text>
+  <text x="430" y="58" text-anchor="middle" class="s">ZaloBotLoginClient · bot.zaloplatforms.com/agent/* · polling only, no login callback</text>
+
+  <!-- 1 · Caller -->
+  <rect x="150" y="76" width="560" height="58" rx="10" fill="#fdebd3" stroke="#d99a2b"/>
+  <text x="430" y="100" text-anchor="middle" class="t">1 · Caller — new ZaloBotLoginClient()</text>
+  <text x="430" y="120" text-anchor="middle" class="s">defaults: poll 1.5 s · session 5 min · max 3 attempts</text>
+  <line x1="430" y1="134" x2="430" y2="158" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 2 · RequestLoginAsync -->
+  <rect x="150" y="158" width="560" height="64" rx="10" fill="#dceaff" stroke="#7aa5e0"/>
+  <text x="430" y="183" text-anchor="middle" class="t">2 · RequestLoginAsync()</text>
+  <text x="430" y="204" text-anchor="middle" class="s">GET bot.zaloplatforms.com/agent/request-login</text>
+  <line x1="430" y1="222" x2="430" y2="246" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 3 · Session service returns -->
+  <rect x="150" y="246" width="560" height="64" rx="10" fill="#e2f5e9" stroke="#5da87c"/>
+  <text x="430" y="271" text-anchor="middle" class="t">3 · Session service returns ZaloLoginSession</text>
+  <text x="430" y="292" text-anchor="middle" class="s">{ LoginUrl, Zbsk } — QR expires after 5 min</text>
+  <line x1="430" y1="310" x2="430" y2="334" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 4 · Frontend renders QR -->
+  <rect x="150" y="334" width="560" height="64" rx="10" fill="#fdebd3" stroke="#d99a2b"/>
+  <text x="430" y="359" text-anchor="middle" class="t">4 · onSessionReady(session) — frontend renders the QR</text>
+  <text x="430" y="380" text-anchor="middle" class="s">from LoginUrl — the SDK never renders QR codes</text>
+  <line x1="430" y1="398" x2="430" y2="422" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 5 · User scans -->
+  <rect x="150" y="422" width="560" height="58" rx="10" fill="#fdebd3" stroke="#d99a2b"/>
+  <text x="430" y="446" text-anchor="middle" class="t">5 · User scans the QR with the Zalo app</text>
+  <text x="430" y="466" text-anchor="middle" class="s">Zalo marks the session on its server</text>
+  <line x1="430" y1="480" x2="430" y2="504" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 6 · WaitForLoginAsync -->
+  <rect x="150" y="504" width="560" height="64" rx="10" fill="#dceaff" stroke="#7aa5e0"/>
+  <text x="430" y="529" text-anchor="middle" class="t">6 · WaitForLoginAsync(session)</text>
+  <text x="430" y="550" text-anchor="middle" class="s">GET /agent/get-login-status?zbsk=… · every 1.5 s</text>
+  <line x1="430" y1="568" x2="430" y2="592" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Decision diamond -->
+  <polygon points="430,592 570,642 430,692 290,642" fill="#f3e8ff" stroke="#a67fe0"/>
+  <text x="430" y="638" text-anchor="middle" class="t">Scan confirmed?</text>
+  <text x="430" y="657" text-anchor="middle" class="d">isLogin &amp;&amp; botToken</text>
+
+  <!-- Right branch: not yet, poll again -->
+  <path d="M 570 642 H 800 V 536 H 710" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="685" y="632" text-anchor="middle" class="d">No — 202 · poll again</text>
+
+  <!-- Left branch: expired / timed out -->
+  <path d="M 290 642 H 150 V 730" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="280" y="632" text-anchor="end" class="d">Expired (498) / timed out</text>
+
+  <!-- 7 · Fresh session (LoginAsync loop) -->
+  <rect x="60" y="730" width="340" height="84" rx="10" fill="#dceaff" stroke="#7aa5e0"/>
+  <text x="230" y="756" text-anchor="middle" class="t">7 · LoginAsync: fresh session</text>
+  <text x="230" y="777" text-anchor="middle" class="d">callback gets the new URL · attempts ≤ 3</text>
+  <text x="230" y="796" text-anchor="middle" class="d">then returns last Expired / TimedOut</text>
+  <!-- Loop back to step 2 -->
+  <path d="M 60 772 H 30 V 190 H 150" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text transform="rotate(-90 22 480)" x="22" y="480" text-anchor="middle" class="d">back to RequestLoginAsync</text>
+
+  <!-- Down branch: connected -->
+  <line x1="430" y1="692" x2="430" y2="830" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="442" y="762" class="d">Yes — isLogin &amp;&amp; botToken</text>
+
+  <!-- 8 · Result -->
+  <rect x="150" y="830" width="560" height="64" rx="10" fill="#dceaff" stroke="#7aa5e0"/>
+  <text x="430" y="855" text-anchor="middle" class="t">8 · ZaloLoginResult — Status = Connected</text>
+  <text x="430" y="876" text-anchor="middle" class="s">BotToken · BotId · OwnerId · OaId</text>
+  <line x1="430" y1="894" x2="430" y2="918" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 9 · ZaloBotClient -->
+  <rect x="150" y="918" width="560" height="64" rx="10" fill="#dceaff" stroke="#7aa5e0"/>
+  <text x="430" y="943" text-anchor="middle" class="t">9 · new ZaloBotClient(result.BotToken)</text>
+  <text x="430" y="964" text-anchor="middle" class="s">optional: GetMeAsync() to verify the token</text>
+  <line x1="430" y1="982" x2="430" y2="1006" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 10 · Bot API -->
+  <rect x="150" y="1006" width="560" height="64" rx="10" fill="#e0f2f1" stroke="#4db6ac"/>
+  <text x="430" y="1031" text-anchor="middle" class="t">10 · Call the Bot API — SendMessageAsync(…)</text>
+  <text x="430" y="1052" text-anchor="middle" class="s">POST bot-api.zaloplatforms.com/bot{token}/{method}</text>
+  <line x1="430" y1="1070" x2="430" y2="1094" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- End -->
+  <rect x="280" y="1094" width="300" height="46" rx="23" fill="#1a1a1a"/>
+  <text x="430" y="1123" text-anchor="middle" style="font-size: 15px; font-weight: 700; fill: #ffffff;">✓ Logged in — bot is ready</text>
+
+  <!-- Notes -->
+  <rect x="60" y="1164" width="740" height="96" rx="10" fill="#fff8e6" stroke="#e8c96a"/>
+  <text x="80" y="1189" style="font-size: 14px; font-weight: 700; fill: #1a1a1a;">Notes</text>
+  <text x="80" y="1211" class="n">• No callback for login — the scan confirmation is learned only by polling get-login-status.</text>
+  <text x="80" y="1231" class="n">• The SDK never renders a QR code — the frontend renders one from LoginUrl.</text>
+  <text x="80" y="1251" class="n">• The SDK never stores credentials — the caller stores BotToken securely.</text>
+</svg>

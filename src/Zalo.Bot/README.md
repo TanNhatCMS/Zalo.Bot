@@ -33,6 +33,8 @@ that is why it is a separate client, not a method on `ZaloBotClient`.
 
 How it works:
 
+![QR login flow: RequestLoginAsync returns LoginUrl and Zbsk, the frontend renders the QR from LoginUrl, the user scans it with the Zalo app, WaitForLoginAsync polls get-login-status every 1.5 s until the scan is confirmed, expired sessions are refreshed up to 3 times, then a ZaloBotClient is created from the returned bot token.](docs/qr-login-flow.svg)
+
 1. `RequestLoginAsync()` — `GET {sessionService}/agent/request-login` returns a
    `ZaloLoginSession`: `LoginUrl` (the URL to render as a QR code) + `Zbsk` (the session key).
    The session — and its QR — expires after 5 minutes.
