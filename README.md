@@ -35,6 +35,27 @@ dotnet add package Zalo.Bot
 Mỗi phiên bản cũng có `.nupkg`/`.snupkg` đính kèm trên [GitHub Releases] — dùng khi cần feed cục bộ
 (thêm `<add key="local" value="packages" />` vào `nuget.config`).
 
+Gói cũng được đẩy lên **GitHub Packages** (`https://nuget.pkg.github.com/TanNhatCMS/index.json`). Feed này luôn cần
+xác thực, kể cả với gói public: dùng personal access token (classic) có scope `read:packages`, và khai báo source
+mapping để chỉ `Zalo.Bot` lấy từ GitHub còn mọi gói khác vẫn lấy từ nuget.org:
+
+```xml
+<configuration>
+  <packageSources>
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="github-tannhatcms" value="https://nuget.pkg.github.com/TanNhatCMS/index.json" />
+  </packageSources>
+  <packageSourceMapping>
+    <packageSource key="nuget.org"><package pattern="*" /></packageSource>
+    <packageSource key="github-tannhatcms"><package pattern="Zalo.Bot" /></packageSource>
+  </packageSourceMapping>
+</configuration>
+```
+
+```bash
+dotnet nuget update source github-tannhatcms --username <github-user> --password <PAT> --store-password-in-clear-text
+```
+
 ### Gửi tin nhắn đầu tiên
 
 ```csharp
