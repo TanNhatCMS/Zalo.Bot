@@ -38,15 +38,13 @@ jobs:
           --logger trx
 
       - name: Generate coverage report
-        uses: danielpalme/ReportGenerator-GitHub-Action@5
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.6.0
         with:
           reports: coverage/**/coverage.cobertura.xml
           targetdir: coverage-report
-          reporttypes: HtmlInline;Cobertura;MarkdownSummaryGithub
+          reporttypes: HtmlInline;Cobertura;MarkdownSummaryGithub;Badges
+          tag: '${{ github.run_number }}_${{ github.run_id }}'
           title: Zalo.Bot coverage
-
-      - name: Publish summary
-        run: cat coverage-report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -55,3 +53,14 @@ jobs:
           path: |
             coverage-report
             coverage/**/*.trx
+
+      - name: Add comment to PR # Only applicable if 'MarkdownSummaryGithub' or one of the other Markdown report types is generated
+        if: github.event_name == 'pull_request'
+        run: gh pr comment $PR_NUMBER --edit-last --create-if-none --body-file coveragereport/SummaryGithub.md # Adjust path and filename if necessary
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.number }}
+      
+      - name: Publish coverage in build summary # Only applicable if 'MarkdownSummaryGithub' or one of the other Markdown report types is generated
+        run: cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY # Adjust path and filename if necessary
+        shell: bash
