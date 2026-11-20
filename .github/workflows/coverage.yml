@@ -38,7 +38,7 @@ jobs:
           --logger trx
 
       - name: Generate coverage report
-        uses: danielpalme/ReportGenerator-GitHub-Action@5.6.0
+        uses: danielpalme/ReportGenerator-GitHub-Action@v5.6.1
         with:
           reports: coverage/**/coverage.cobertura.xml
           targetdir: coverage-report
