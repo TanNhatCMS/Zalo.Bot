@@ -1,13 +1,13 @@
 # Zalo.Bot
 
-Independent .NET 10 client library for the **Zalo Bot API** (docs: <https://bot.zapps.me/docs>;
+Independent .NET 11 client library for the **Zalo Bot API** (docs: <https://bot.zapps.me/docs>;
 offline copy in [docs/](https://github.com/TanNhatCMS/Zalo.Bot/tree/main/docs) — scraped 2026-09-14, all 21 pages incl. 11 API references).
 Adapted from [Telegram.Bot](https://github.com/TelegramBots/Telegram.Bot) (MIT — see
 `LICENSE-Telegram.Bot.txt`), pruned to the **11 methods** the Zalo Bot API exposes, and extended
 with an official-error-code taxonomy, a retry/backoff pipeline and access-token hygiene.
 
-**Leaf project**: references no other solution project and no NuGet packages (`System.Text.Json`
-is part of the shared framework). Nothing in the app layers may be referenced from here.
+**Zero external dependencies**: references no NuGet packages (`System.Text.Json`
+is part of the shared framework).
 
 ## Quick start
 
@@ -22,7 +22,7 @@ Message sent = await client.SendMessageAsync("5128471675483426707", "Hello bot")
   (`{BaseUrl}/bot{Token}/{method}`); it never appears in headers, bodies, logs or exceptions.
 - `ZaloBotClientOptions.DefaultBaseUrl` = `https://bot-api.zaloplatforms.com` (official server).
 - Events `OnMakingApiRequest` / `OnApiResponseReceived` (`AsyncEventHandler<...>`) allow
-  observation of every request/response — used by the app adapter for logging.
+  observation of every request/response (e.g. for logging or metrics).
 
 ## QR login (get a bot token without storing one)
 
@@ -207,7 +207,7 @@ await client.SendMessageAsync("5128471675483426707", "Xin chào bạn", textStyl
 ]);
 ```
 
-## Polling (adapted from Telegram.Bot's polling — reference tmp/design/TelegramBots)
+## Polling (adapted from Telegram.Bot's polling)
 
 `namespace Zalo.Bot.Polling` + `ZaloBotClientExtensions.Polling.cs` — vòng lặp getUpdates
 built into the SDK, mirroring the Telegram.Bot API surface:
@@ -235,10 +235,6 @@ built into the SDK, mirroring the Telegram.Bot API surface:
 errors/handler exceptions (without it, errors go to `Trace.WriteLine`). Zalo has no `UpdateType`,
 so there is no `OnMessage` event — dispatch on `Update.ContentType`/`Update.Text` in your handler.
 
-The app currently does NOT use the built-in receiver: `Infrastructure/Services/ZaloBotPollingService`
-implements its own multi-bot loop (bot-list cache, per-bot DB offsets, settings, counters). The SDK
-receiver is for single-token scenarios (tools, scripts, one bot per process).
-
 ## Errors, retry and token hygiene
 
 Taxonomy (`Errors/ZaloSdkErrorTaxonomy.cs`) maps the official codes:
@@ -261,31 +257,15 @@ Taxonomy (`Errors/ZaloSdkErrorTaxonomy.cs`) maps the official codes:
   sender (callers decide).
 - Every exception message (and the `InvalidJsonException` body excerpt) is sanitized through
   `TokenSanitizer` — the access token never leaks through message, `ToString()` or inner exceptions.
-- Never log the request URL or raw bodies in app code: the token lives in the URL only.
+- Never log the request URL or raw bodies in caller code: the token lives in the URL only.
 
 ## Long-polling gotcha (getUpdates)
 
 With long polling, the server holds the connection up to `timeoutSeconds`. If the SDK per-request
 timeout is not strictly **longer** than the long-poll timeout, the client cancels the request just
-as the server is about to answer → spurious timeouts. The app therefore sends an explicit
-`timeoutSeconds` (adapter constant `LongPollTimeoutSeconds = 25`) plus a 15 s buffer as
-the per-request timeout (40 s). Hierarchy to preserve: **server long-poll < SDK per-request timeout**.
-Guard tests: `ZaloBotClientLongPollTests`.
-
-## App integration map
-
-```
-Zalo.Bot (this project)                        ← HTTP, retry, taxonomy, hygiene
-  ▲
-  │ thin adapter: Infrastructure/External/ZaloBotClient.cs
-  │   (maps SDK types → app DTOs, translates exceptions, per-request timeouts)
-  ▼
-Application.Common.Interfaces.IZaloBotClient      ← app-side interface (NOT the SDK one)
-```
-
-The adapter implements the app interface `QuanLyCongViec.Application.Common.Interfaces.IZaloBotClient`
-using the SDK `Sdk.ZaloBotClient` created per call with the bot's access token
-(`Infrastructure/DependencyInjection.cs` registers it). Bot entity: `Domain/Entities/ZaloBot`.
+as the server is about to answer → spurious timeouts. Configure an explicit
+`timeoutSeconds` (e.g. 25 s) plus a buffer (e.g. 15 s) for the client's
+per-request `TimeoutSeconds` (40 s). Hierarchy to preserve: **server long-poll < SDK per-request timeout**.
 
 ## Tests
 

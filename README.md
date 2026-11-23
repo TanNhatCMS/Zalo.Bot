@@ -3,7 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/vpre/Zalo.Bot.svg?style=flat-square&label=Zalo.Bot&color=0068ff)](https://www.nuget.org/packages/Zalo.Bot)
 [![Downloads](https://img.shields.io/nuget/dt/Zalo.Bot.svg?style=flat-square&label=Downloads)](https://www.nuget.org/packages/Zalo.Bot)
 [![Zalo Bot API](https://img.shields.io/badge/Zalo_Bot_API-11_methods-0068ff.svg?style=flat-square)](https://bot.zapps.me/docs)
-[![.NET 10](https://img.shields.io/badge/.NET-10.0-512bd4.svg?style=flat-square)](https://dotnet.microsoft.com/)
+[![.NET 11](https://img.shields.io/badge/.NET-11.0-512bd4.svg?style=flat-square)](https://dotnet.microsoft.com/)
 [![Build](https://img.shields.io/github/actions/workflow/status/TanNhatCMS/Zalo.Bot/nuget.yml?branch=main&style=flat-square&label=build)](https://github.com/TanNhatCMS/Zalo.Bot/actions/workflows/nuget.yml)
 [![License](https://img.shields.io/github/license/TanNhatCMS/Zalo.Bot?style=flat-square&label=License)](LICENSE)
 [![Coverage](https://img.shields.io/github/actions/workflow/status/TanNhatCMS/Zalo.Bot/coverage.yml?branch=main&style=flat-square&label=coverage)](https://github.com/TanNhatCMS/Zalo.Bot/actions/workflows/coverage.yml)
@@ -140,7 +140,7 @@ session mới. SDK không lưu credential — tự lưu token an toàn phía cal
 
 ## 🚧 Nền tảng hỗ trợ
 
-Thư viện target **.NET 10** (`net10.0`).
+Thư viện target **.NET 11** (`net11.0`).
 
 ## ✅ Độ chính xác & kiểm thử
 
@@ -162,7 +162,7 @@ Push tag `vX.Y.Z` sẽ pack phiên bản `X.Y.Z`, tạo GitHub Release kèm `.nu
 bằng [Trusted Publishing] — GitHub cấp OIDC token, nuget.org đổi lấy API key tạm 1 giờ, **không lưu API key nào trong repo**.
 
 ```bash
-git tag v1.0.2 && git push origin v1.0.2
+git tag v1.0.3 && git push origin v1.0.3
 ```
 
 ## 🗂 Tham khảo

@@ -6,7 +6,7 @@
     Pruned to the 11 methods the Zalo Bot API exposes and extended with an official-error-code
     taxonomy, retry/backoff pipeline and access-token hygiene (token never appears in exceptions).
     Leaf project: references no other solution project and no NuGet packages
-    (System.Text.Json is part of the net10.0 shared framework).
+    (System.Text.Json is part of the net11.0 shared framework).
   -->
 
   <PropertyGroup>
